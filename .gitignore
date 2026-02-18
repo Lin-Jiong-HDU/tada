@@ -1,0 +1,41 @@
+.DS_Store
+
+dist/
+
+.env
+
+config.yaml
+
+.idea/
+
+.claude/
+
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+tapbuddy
+
+# Test files
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work.sum
+
+# Temporary files
+*.swp
+*.swn
+*.swo
+*~
+
+# Air live reload tool
+tmp/

@@ -1,2 +1,14 @@
-# tada
-🪄 `tada "Help me think of a repository description"`
+# tada 🪄
+
+> **"Tada! And it's done."**
+
+`tada` 是一个用 Go 编写的轻量级终端智能助手。它能理解你的意图并自动执行命令，
+让你从繁琐的 CLI 语法中解脱出来，专注于更重要的事情。
+
+---
+
+### 例子：
+
+$ tada "帮我建一个名为 project 的文件夹，并在里面初始化一个 git 仓库"
+$ tada "记账：今天午饭花了 25 元"
+$ tada "帮我列出当前目录下最大的 5 个文件"
