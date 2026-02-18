@@ -1,6 +1,8 @@
 package openai
 
 import (
+	"context"
+	"os"
 	"testing"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
@@ -66,4 +68,31 @@ func TestAI_Types(t *testing.T) {
 
 	_ = intent
 	_ = msg
+}
+
+// Add integration test (only run with TADA_INTEGRATION_TEST=1)
+func TestIntegration_RealAPI(t *testing.T) {
+	if os.Getenv("TADA_INTEGRATION_TEST") == "" {
+		t.Skip("Set TADA_INTEGRATION_TEST=1 to run integration tests")
+	}
+
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	if apiKey == "" {
+		t.Skip("OPENAI_API_KEY not set")
+	}
+
+	client := NewClient(apiKey, "gpt-4o-mini", "https://api.openai.com/v1")
+	response, err := client.Chat(context.Background(), []ai.Message{
+		{Role: "user", Content: "Say 'Hello, tada!'"},
+	})
+
+	if err != nil {
+		t.Fatalf("Chat failed: %v", err)
+	}
+
+	if response == "" {
+		t.Error("Expected non-empty response")
+	}
+
+	t.Logf("Response: %s", response)
 }

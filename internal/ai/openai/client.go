@@ -1,9 +1,13 @@
 package openai
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"time"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
 )
@@ -82,9 +86,53 @@ func (c *Client) Chat(ctx context.Context, messages []ai.Message) (string, error
 
 // callAPI makes the actual API call
 func (c *Client) callAPI(ctx context.Context, messages []ai.Message) (string, error) {
-	// TODO: Implement actual HTTP call to OpenAI API
-	// For now, return a mock response
-	return "Mock response - implement HTTP client", nil
+	reqBody := map[string]interface{}{
+		"model":    c.model,
+		"messages": messages,
+	}
+
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/chat/completions", bytes.NewReader(jsonBody))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var respData struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if len(respData.Choices) == 0 {
+		return "", fmt.Errorf("no choices in response")
+	}
+
+	return respData.Choices[0].Message.Content, nil
 }
 
 // parseIntentResponse parses JSON response into Intent
