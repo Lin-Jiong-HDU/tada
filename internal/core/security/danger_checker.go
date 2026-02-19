@@ -30,9 +30,9 @@ func NewDangerousCommandChecker() *DangerousCommandChecker {
 			"rm -rf /",
 			"rm -rf .*",
 			"> /",
-			">/",           // No-space variant
+			">/", // No-space variant
 			"chmod 777 /",
-			"chmod 777/",   // No-space variant
+			"chmod 777/", // No-space variant
 		},
 	}
 }
