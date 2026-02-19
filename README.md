@@ -2,13 +2,62 @@
 
 > **"Tada! And it's done."**
 
-`tada` 是一个用 Go 编写的轻量级终端智能助手。它能理解你的意图并自动执行命令，
-让你从繁琐的 CLI 语法中解脱出来，专注于更重要的事情。
+`tada` is a lightweight terminal AI assistant written in Go. It understands your intent and automatically executes commands, freeing you from tedious CLI syntax.
 
----
+## Features
 
-### 例子：
+- 🗣️ Natural language interface - just tell it what you want
+- 🧠 AI-powered intent understanding
+- 💾 Session persistence with history
+- 🔒 Configurable security levels (coming in Phase 2)
+- 🔌 Plugin system (coming in Phase 2)
 
-$ tada "帮我建一个名为 project 的文件夹，并在里面初始化一个 git 仓库"
-$ tada "记账：今天午饭花了 25 元"
-$ tada "帮我列出当前目录下最大的 5 个文件"
+## Installation
+
+```bash
+git clone https://github.com/Lin-Jiong-HDU/tada.git
+cd tada
+go build -o tada cmd/tada/main.go
+sudo mv tada /usr/local/bin/
+```
+
+## Configuration
+
+Create `~/.tada/config.yaml`:
+
+```yaml
+ai:
+  provider: openai
+  api_key: sk-xxx  # Your OpenAI API key
+  model: gpt-4o-mini
+  base_url: https://api.openai.com/v1
+  timeout: 30
+  max_tokens: 4096
+```
+
+## Usage
+
+```bash
+# Simple commands
+tada "list all files in the current directory"
+tada "create a new folder named docs"
+tada "say hello to the world"
+
+# Incognito mode (no history saved)
+tada -i "run a secret command"
+```
+
+## Development
+
+See [docs/getting-started.md](docs/getting-started.md) for development setup.
+
+## Roadmap
+
+- [x] Phase 1: MVP (CLI + AI + Command Execution)
+- [ ] Phase 2: Plugins + Security
+- [ ] Phase 3: TUI + Async Tasks
+- [ ] Phase 4: Multiple AI Providers + i18n
+
+## License
+
+MIT
