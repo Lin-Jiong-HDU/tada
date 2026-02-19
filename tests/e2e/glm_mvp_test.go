@@ -8,6 +8,7 @@ import (
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai/glm"
 	"github.com/Lin-Jiong-HDU/tada/internal/core"
+	"github.com/Lin-Jiong-HDU/tada/internal/core/security"
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
 )
 
@@ -46,7 +47,7 @@ func TestGLM_MVP_FullWorkflow(t *testing.T) {
 	// Create GLM client and engine
 	glmClient := glm.NewClient(apiKey, "glm-5", "")
 	executor := core.NewExecutor(30 * time.Second)
-	engine := core.NewEngine(glmClient, executor)
+	engine := core.NewEngine(glmClient, executor, security.DefaultPolicy())
 
 	// Test simple command
 	err = engine.Process(context.Background(), "say hello to the world", "")
