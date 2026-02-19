@@ -49,15 +49,10 @@ func (sc *SecurityController) CheckCommand(cmd ai.Command) (*CheckResult, error)
 		}
 
 		// Check readonly paths (for write operations)
-		// Simple heuristic: commands that typically write
-		writeCommands := []string{"rm", "mv", "cp", "touch", "mkdir", "chmod", "chown", "echo", "cat", "tee"}
-		isWrite := false
-		for _, wc := range writeCommands {
-			if cmd.Cmd == wc {
-				isWrite = true
-				break
-			}
-		}
+		// Determine if this is a write operation by checking for:
+		// 1. Redirect operators in command arguments (>, >>)
+		// 2. Commands that are inherently write operations
+		isWrite := sc.isWriteOperation(cmd)
 
 		if sc.pathChecker.IsReadOnly(p, isWrite) {
 			return &CheckResult{
@@ -114,4 +109,34 @@ func (sc *SecurityController) CheckPathAccess(path string, write bool) (*CheckRe
 // AnalyzeShellCommand analyzes a shell command.
 func (sc *SecurityController) AnalyzeShellCommand(cmdStr string) (*CheckResult, error) {
 	return sc.shellAnalyzer.Analyze(cmdStr), nil
+}
+
+// isWriteOperation determines if a command is a write operation.
+// It checks for redirect operators and inherently write-focused commands.
+func (sc *SecurityController) isWriteOperation(cmd ai.Command) bool {
+	// Build full command string to check for redirects
+	cmdStr := cmd.Cmd
+	if len(cmd.Args) > 0 {
+		cmdStr += " " + strings.Join(cmd.Args, " ")
+	}
+
+	// Check for redirect operators (output redirection)
+	if strings.Contains(cmdStr, ">") || strings.Contains(cmdStr, ">>") {
+		return true
+	}
+
+	// Commands that are inherently write operations
+	// (removed echo and cat since they're not inherently writes)
+	writeCommands := map[string]bool{
+		"rm":    true, // delete
+		"mv":    true, // move/rename
+		"cp":    true, // copy
+		"touch": true, // create file
+		"mkdir": true, // create directory
+		"chmod": true, // change permissions
+		"chown": true, // change owner
+		"tee":   true, // write to stdin and file
+	}
+
+	return writeCommands[cmd.Cmd]
 }
