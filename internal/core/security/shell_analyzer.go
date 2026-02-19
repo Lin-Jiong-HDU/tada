@@ -1,6 +1,7 @@
 package security
 
 import (
+	"regexp"
 	"strings"
 )
 
@@ -34,25 +35,23 @@ func (sa *ShellCommandAnalyzer) Analyze(cmdStr string) *CheckResult {
 		}
 	}
 
-	// Check for dangerous patterns
-	dangerousPatterns := []struct {
-		pattern string
-		reason  string
-	}{
-		{"> /etc/", "redirecting to system path /etc/"},
-		{"> /usr/", "redirecting to system path /usr/"},
-		{"> /System", "redirecting to System directory"},
-		{"../", "potential path traversal"},
+	// Check for path traversal patterns
+	if strings.Contains(cmdStr, "../") {
+		return &CheckResult{
+			Allowed:      true,
+			RequiresAuth: true,
+			Warning:      "Dangerous shell operation detected",
+			Reason:       "potential path traversal",
+		}
 	}
 
-	for _, dp := range dangerousPatterns {
-		if strings.Contains(cmdStr, dp.pattern) {
-			return &CheckResult{
-				Allowed:      true,
-				RequiresAuth: true,
-				Warning:      "Dangerous shell operation detected",
-				Reason:       dp.reason,
-			}
+	// Check for dangerous redirects to protected paths
+	if sa.hasDangerousRedirect(cmdStr) {
+		return &CheckResult{
+			Allowed:      true,
+			RequiresAuth: true,
+			Warning:      "Dangerous shell operation detected",
+			Reason:       "redirecting to protected system path",
 		}
 	}
 
@@ -60,4 +59,49 @@ func (sa *ShellCommandAnalyzer) Analyze(cmdStr string) *CheckResult {
 	return &CheckResult{
 		Allowed: true,
 	}
+}
+
+// hasDangerousRedirect checks if the command has redirects to protected paths.
+// It detects redirects regardless of whitespace or file descriptor prefixes.
+func (sa *ShellCommandAnalyzer) hasDangerousRedirect(cmdStr string) bool {
+	// Regex to match shell redirects with their target paths
+	// Matches: >, >>, <, with optional file descriptor (0-9) and optional whitespace
+	// Examples: >file, > file, 1>/etc/passwd, 2>> /var/log, >>file
+	redirectRegex := regexp.MustCompile(`[0-9]?(>>?>?)[ \t]*([^\s&|;]+)`)
+
+	matches := redirectRegex.FindAllStringSubmatch(cmdStr, -1)
+
+	// Protected paths that require authorization
+	protectedPaths := []string{
+		"/etc/",
+		"/usr/",
+		"/usr/bin/",
+		"/usr/sbin/",
+		"/System",
+		"/bin/",
+		"/sbin/",
+		"/boot/",
+		"/lib/",
+		"/lib64/",
+	}
+
+	for _, match := range matches {
+		if len(match) < 3 {
+			continue
+		}
+		redirectOp := match[1]
+		targetPath := match[2]
+
+		// Only check output redirects (>, >>)
+		if redirectOp == ">" || redirectOp == ">>" {
+			for _, protected := range protectedPaths {
+				// Check if target is a protected path or under a protected directory
+				if strings.HasPrefix(targetPath, protected) || targetPath == strings.TrimSuffix(protected, "/") {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
 }
