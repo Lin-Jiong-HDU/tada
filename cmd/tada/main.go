@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var incognito bool
+
 var rootCmd = &cobra.Command{
 	Use:   "tada",
 	Short: "Terminal AI assistant",
@@ -22,7 +24,10 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = storage.InitSession()
+		// Skip session init in incognito mode
+		if !incognito {
+			_, err = storage.InitSession()
+		}
 		return err
 	},
 	Run: func(cmd *cobra.Command, args []string) {
@@ -47,6 +52,10 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 	},
+}
+
+func init() {
+	rootCmd.PersistentFlags().BoolVarP(&incognito, "incognito", "i", false, "Run in incognito mode (don't save history)")
 }
 
 func main() {
