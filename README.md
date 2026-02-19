@@ -25,12 +25,24 @@ sudo mv tada /usr/local/bin/
 
 Create `~/.tada/config.yaml`:
 
+**For OpenAI:**
 ```yaml
 ai:
   provider: openai
   api_key: sk-xxx  # Your OpenAI API key
   model: gpt-4o-mini
   base_url: https://api.openai.com/v1
+  timeout: 30
+  max_tokens: 4096
+```
+
+**For GLM (Zhipu AI):**
+```yaml
+ai:
+  provider: glm
+  api_key: xxx  # Your GLM API key
+  model: glm-5
+  base_url: https://open.bigmodel.cn/api
   timeout: 30
   max_tokens: 4096
 ```

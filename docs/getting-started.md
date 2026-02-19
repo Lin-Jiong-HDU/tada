@@ -19,13 +19,28 @@ go mod download
 ```
 
 3. Configure API key:
+
+**For OpenAI:**
 ```bash
 mkdir -p ~/.tada
 cat > ~/.tada/config.yaml << EOF
 ai:
   provider: openai
-  api_key: YOUR_API_KEY
+  api_key: YOUR_OPENAI_API_KEY
   model: gpt-4o-mini
+  base_url: https://api.openai.com/v1
+EOF
+```
+
+**For GLM (Zhipu AI):**
+```bash
+mkdir -p ~/.tada
+cat > ~/.tada/config.yaml << EOF
+ai:
+  provider: glm
+  api_key: YOUR_GLM_API_KEY
+  model: glm-5
+  base_url: https://open.bigmodel.cn/api
 EOF
 ```
 
