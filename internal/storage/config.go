@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Lin-Jiong-HDU/tada/internal/core/security"
 	"github.com/spf13/viper"
 )
 
@@ -18,7 +19,8 @@ var config *Config
 
 // Config holds the application configuration
 type Config struct {
-	AI AIConfig `mapstructure:"ai"`
+	AI       AIConfig                `mapstructure:"ai"`
+	Security security.SecurityPolicy `mapstructure:"security"`
 }
 
 // AIConfig holds AI-related configuration
@@ -63,6 +65,13 @@ func InitConfig() (*Config, error) {
 	v.SetDefault("ai.base_url", "https://api.openai.com/v1")
 	v.SetDefault("ai.timeout", 30)
 	v.SetDefault("ai.max_tokens", 4096)
+
+	// Security defaults
+	v.SetDefault("security.command_level", "dangerous")
+	v.SetDefault("security.allow_shell", true)
+	v.SetDefault("security.allow_terminal_takeover", true)
+	v.SetDefault("security.restricted_paths", []string{})
+	v.SetDefault("security.readonly_paths", []string{})
 
 	// Read config file (ignore if not exists)
 	if err := v.ReadInConfig(); err != nil {
@@ -109,6 +118,13 @@ func SaveConfig(cfg *Config) error {
 	v.Set("ai.base_url", cfg.AI.BaseURL)
 	v.Set("ai.timeout", cfg.AI.Timeout)
 	v.Set("ai.max_tokens", cfg.AI.MaxTokens)
+
+	// Save security config
+	v.Set("security.command_level", cfg.Security.CommandLevel)
+	v.Set("security.allow_shell", cfg.Security.AllowShell)
+	v.Set("security.allow_terminal_takeover", cfg.Security.AllowTerminalTakeover)
+	v.Set("security.restricted_paths", cfg.Security.RestrictedPaths)
+	v.Set("security.readonly_paths", cfg.Security.ReadOnlyPaths)
 
 	configPath := filepath.Join(configDir, ConfigFileName+"."+ConfigFileType)
 	return v.WriteConfigAs(configPath)
