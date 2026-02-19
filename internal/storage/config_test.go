@@ -4,8 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/Lin-Jiong-HDU/tada/internal/core"
 )
 
 func TestGetConfigDir(t *testing.T) {
@@ -60,8 +58,8 @@ func TestSaveConfig(t *testing.T) {
 	os.Setenv("HOME", tmpDir)
 	defer os.Setenv("HOME", oldHome)
 
-	cfg := &core.Config{
-		AI: core.AIConfig{
+	cfg := &Config{
+		AI: AIConfig{
 			Provider:  "test",
 			APIKey:    "test-key",
 			Model:     "test-model",

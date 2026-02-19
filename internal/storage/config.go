@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Lin-Jiong-HDU/tada/internal/core"
 	"github.com/spf13/viper"
 )
 
@@ -15,7 +14,22 @@ const (
 	TadaDirName    = ".tada"
 )
 
-var config *core.Config
+var config *Config
+
+// Config holds the application configuration
+type Config struct {
+	AI AIConfig `mapstructure:"ai"`
+}
+
+// AIConfig holds AI-related configuration
+type AIConfig struct {
+	Provider  string `mapstructure:"provider"`
+	APIKey    string `mapstructure:"api_key"`
+	Model     string `mapstructure:"model"`
+	BaseURL   string `mapstructure:"base_url"`
+	Timeout   int    `mapstructure:"timeout"`
+	MaxTokens int    `mapstructure:"max_tokens"`
+}
 
 // GetConfigDir returns the tada config directory path
 func GetConfigDir() (string, error) {
@@ -27,7 +41,7 @@ func GetConfigDir() (string, error) {
 }
 
 // InitConfig initializes the configuration
-func InitConfig() (*core.Config, error) {
+func InitConfig() (*Config, error) {
 	configDir, err := GetConfigDir()
 	if err != nil {
 		return nil, err
@@ -58,7 +72,7 @@ func InitConfig() (*core.Config, error) {
 		// Config not found, will create with defaults
 	}
 
-	var cfg core.Config
+	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
@@ -68,12 +82,12 @@ func InitConfig() (*core.Config, error) {
 }
 
 // GetConfig returns the loaded config
-func GetConfig() *core.Config {
+func GetConfig() *Config {
 	return config
 }
 
 // SaveConfig saves the current config to file
-func SaveConfig(cfg *core.Config) error {
+func SaveConfig(cfg *Config) error {
 	configDir, err := GetConfigDir()
 	if err != nil {
 		return err

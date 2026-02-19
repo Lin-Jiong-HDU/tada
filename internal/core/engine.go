@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
+	"github.com/Lin-Jiong-HDU/tada/internal/storage"
 )
 
 // Engine orchestrates the AI workflow
@@ -23,6 +24,12 @@ func NewEngine(aiProvider ai.AIProvider, executor *Executor) *Engine {
 
 // Process handles a user request from input to output
 func (e *Engine) Process(ctx context.Context, input string, systemPrompt string) error {
+	// Add user message to session
+	session := storage.GetCurrentSession()
+	if session != nil {
+		storage.AddMessage("user", input)
+	}
+
 	// Step 1: Parse intent
 	fmt.Println("🧠 Thinking...")
 	intent, err := e.ai.ParseIntent(ctx, input, systemPrompt)
@@ -64,6 +71,11 @@ func (e *Engine) Process(ctx context.Context, input string, systemPrompt string)
 				fmt.Printf("✅ %s\n", analysis)
 			}
 		}
+	}
+
+	// Add assistant response to session
+	if session != nil {
+		storage.AddMessage("assistant", intent.Reason)
 	}
 
 	return nil

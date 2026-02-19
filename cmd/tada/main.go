@@ -19,6 +19,10 @@ var rootCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		_, err := storage.InitConfig()
+		if err != nil {
+			return err
+		}
+		_, err = storage.InitSession()
 		return err
 	},
 	Run: func(cmd *cobra.Command, args []string) {
