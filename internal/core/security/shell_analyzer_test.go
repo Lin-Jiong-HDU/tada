@@ -9,34 +9,34 @@ func TestShellCommandAnalyzer_Analyze(t *testing.T) {
 	analyzer := NewShellCommandAnalyzer(policy)
 
 	tests := []struct {
-		name          string
-		cmdStr        string
+		name         string
+		cmdStr       string
 		requiresAuth bool
-		reason        string
+		reason       string
 	}{
 		{
-			name:          "safe pipe",
-			cmdStr:        "ls | grep test",
+			name:         "safe pipe",
+			cmdStr:       "ls | grep test",
 			requiresAuth: false,
-			reason:        "",
+			reason:       "",
 		},
 		{
-			name:          "safe redirect",
-			cmdStr:        "echo hello > /tmp/file",
+			name:         "safe redirect",
+			cmdStr:       "echo hello > /tmp/file",
 			requiresAuth: false,
-			reason:        "",
+			reason:       "",
 		},
 		{
-			name:          "dangerous system redirect",
-			cmdStr:        "cat file > /etc/config",
+			name:         "dangerous system redirect",
+			cmdStr:       "cat file > /etc/config",
 			requiresAuth: true,
-			reason:        "redirecting to system path /etc/",
+			reason:       "redirecting to system path /etc/",
 		},
 		{
-			name:          "path traversal",
-			cmdStr:        "cat file > ../../../../etc/passwd",
+			name:         "path traversal",
+			cmdStr:       "cat file > ../../../../etc/passwd",
 			requiresAuth: true,
-			reason:        "potential path traversal",
+			reason:       "potential path traversal",
 		},
 	}
 

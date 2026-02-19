@@ -33,10 +33,10 @@ const (
 // DefaultPolicy returns the default security policy (balanced mode).
 func DefaultPolicy() *SecurityPolicy {
 	return &SecurityPolicy{
-		CommandLevel:         ConfirmDangerous,
-		RestrictedPaths:      []string{},
-		ReadOnlyPaths:        []string{},
-		AllowShell:           true,
+		CommandLevel:          ConfirmDangerous,
+		RestrictedPaths:       []string{},
+		ReadOnlyPaths:         []string{},
+		AllowShell:            true,
 		AllowTerminalTakeover: true,
 	}
 }

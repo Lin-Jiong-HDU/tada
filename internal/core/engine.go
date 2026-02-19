@@ -11,16 +11,16 @@ import (
 
 // Engine orchestrates the AI workflow
 type Engine struct {
-	ai                ai.AIProvider
-	executor          *Executor
+	ai                 ai.AIProvider
+	executor           *Executor
 	securityController *security.SecurityController
 }
 
 // NewEngine creates a new engine
 func NewEngine(aiProvider ai.AIProvider, executor *Executor, securityPolicy *security.SecurityPolicy) *Engine {
 	return &Engine{
-		ai:                aiProvider,
-		executor:          executor,
+		ai:                 aiProvider,
+		executor:           executor,
 		securityController: security.NewSecurityController(securityPolicy),
 	}
 }

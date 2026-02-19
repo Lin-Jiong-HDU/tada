@@ -13,8 +13,8 @@ func TestPathAccessChecker_IsRestricted(t *testing.T) {
 	checker := NewPathAccessChecker(policy)
 
 	tests := []struct {
-		name     string
-		path     string
+		name       string
+		path       string
 		restricted bool
 	}{
 		{"etc is restricted", "/etc/passwd", true},
@@ -65,9 +65,9 @@ func TestPathAccessChecker_ExtractPaths(t *testing.T) {
 	checker := NewPathAccessChecker(&SecurityPolicy{})
 
 	tests := []struct {
-		name   string
-		cmd    ai.Command
-		paths  []string
+		name  string
+		cmd   ai.Command
+		paths []string
 	}{
 		{
 			name:  "single file",

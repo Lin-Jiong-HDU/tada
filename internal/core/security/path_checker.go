@@ -50,7 +50,7 @@ func (pc *PathAccessChecker) IsRestricted(checkPath string) bool {
 
 		// Check if path is restricted or under restricted directory
 		if strings.HasPrefix(absPath, absRestricted+string(filepath.Separator)) ||
-		   absPath == absRestricted {
+			absPath == absRestricted {
 			return true
 		}
 	}
@@ -90,7 +90,7 @@ func (pc *PathAccessChecker) IsReadOnly(checkPath string, write bool) bool {
 
 		// Check if path is in readonly directory
 		if strings.HasPrefix(absPath, absRO+string(filepath.Separator)) ||
-		   absPath == absRO {
+			absPath == absRO {
 			return true
 		}
 	}
