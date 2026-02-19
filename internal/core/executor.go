@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/Lin-Jiong-HDU/tada/internal/ai"
 )
 
 // Executor handles command execution
@@ -29,7 +31,7 @@ type Result struct {
 }
 
 // Execute runs a command and returns the result
-func (e *Executor) Execute(ctx context.Context, cmd Command) (*Result, error) {
+func (e *Executor) Execute(ctx context.Context, cmd ai.Command) (*Result, error) {
 	ctx, cancel := context.WithTimeout(ctx, e.timeout)
 	defer cancel()
 
@@ -63,7 +65,7 @@ func (e *Executor) Execute(ctx context.Context, cmd Command) (*Result, error) {
 }
 
 // ExecuteBatch runs multiple commands sequentially
-func (e *Executor) ExecuteBatch(ctx context.Context, commands []Command) ([]*Result, error) {
+func (e *Executor) ExecuteBatch(ctx context.Context, commands []ai.Command) ([]*Result, error) {
 	results := make([]*Result, len(commands))
 
 	for i, cmd := range commands {

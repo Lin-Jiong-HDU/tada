@@ -4,12 +4,14 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	"github.com/Lin-Jiong-HDU/tada/internal/ai"
 )
 
 func TestExecute_SimpleCommand(t *testing.T) {
 	executor := NewExecutor(5 * time.Second)
 
-	result, err := executor.Execute(context.Background(), Command{
+	result, err := executor.Execute(context.Background(), ai.Command{
 		Cmd:  "echo",
 		Args: []string{"hello", "world"},
 	})
@@ -29,7 +31,7 @@ func TestExecute_SimpleCommand(t *testing.T) {
 func TestExecute_CommandNotFound(t *testing.T) {
 	executor := NewExecutor(5 * time.Second)
 
-	result, err := executor.Execute(context.Background(), Command{
+	result, err := executor.Execute(context.Background(), ai.Command{
 		Cmd: "nonexistent-command-xyz123",
 	})
 
@@ -44,7 +46,7 @@ func TestExecute_CommandNotFound(t *testing.T) {
 func TestExecuteBatch_MultipleCommands(t *testing.T) {
 	executor := NewExecutor(5 * time.Second)
 
-	commands := []Command{
+	commands := []ai.Command{
 		{Cmd: "echo", Args: []string{"first"}},
 		{Cmd: "echo", Args: []string{"second"}},
 	}
