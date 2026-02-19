@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/Lin-Jiong-HDU/tada/internal/ai"
+	"github.com/Lin-Jiong-HDU/tada/internal/ai/glm"
 	"github.com/Lin-Jiong-HDU/tada/internal/ai/openai"
 	"github.com/Lin-Jiong-HDU/tada/internal/core"
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
@@ -41,10 +43,20 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// Initialize components
-		aiClient := openai.NewClient(cfg.AI.APIKey, cfg.AI.Model, cfg.AI.BaseURL)
+		// Initialize components - create AI provider based on config
+		var aiProvider ai.AIProvider
+		switch cfg.AI.Provider {
+		case "openai":
+			aiProvider = openai.NewClient(cfg.AI.APIKey, cfg.AI.Model, cfg.AI.BaseURL)
+		case "glm", "zhipu":
+			aiProvider = glm.NewClient(cfg.AI.APIKey, cfg.AI.Model, cfg.AI.BaseURL)
+		default:
+			fmt.Fprintf(os.Stderr, "❌ Error: unsupported provider '%s' (supported: openai, glm)\n", cfg.AI.Provider)
+			os.Exit(1)
+		}
+
 		executor := core.NewExecutor(30 * time.Second)
-		engine := core.NewEngine(aiClient, executor)
+		engine := core.NewEngine(aiProvider, executor)
 
 		// Process request
 		if err := engine.Process(context.Background(), input, ""); err != nil {

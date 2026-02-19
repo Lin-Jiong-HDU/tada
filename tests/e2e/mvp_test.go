@@ -43,7 +43,7 @@ func TestMVP_FullWorkflow(t *testing.T) {
 	}
 
 	// Create engine
-	aiClient := openai.NewClient(apiKey, "gpt-4o-mini", "https://api.openai.com/v1")
+	aiClient := openai.NewClient(apiKey, "glm-4.7", "https://open.bigmodel.cn/api/paas/v4")
 	executor := core.NewExecutor(30 * time.Second)
 	engine := core.NewEngine(aiClient, executor)
 
