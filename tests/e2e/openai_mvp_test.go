@@ -11,7 +11,7 @@ import (
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
 )
 
-func TestMVP_FullWorkflow(t *testing.T) {
+func TestMVP_FullWorkflow_OpenAI(t *testing.T) {
 	if os.Getenv("TADA_INTEGRATION_TEST") == "" {
 		t.Skip("Set TADA_INTEGRATION_TEST=1 to run E2E tests")
 	}

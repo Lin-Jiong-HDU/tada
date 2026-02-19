@@ -4,7 +4,7 @@ import "context"
 
 // Message represents a chat message
 type Message struct {
-	Role    string `json:"role"`    // "system" | "user" | "assistant"
+	Role    string `json:"role"` // "system" | "user" | "assistant"
 	Content string `json:"content"`
 }
 
