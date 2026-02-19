@@ -5,20 +5,23 @@ import (
 	"fmt"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
+	"github.com/Lin-Jiong-HDU/tada/internal/core/security"
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
 )
 
 // Engine orchestrates the AI workflow
 type Engine struct {
-	ai       ai.AIProvider
-	executor *Executor
+	ai                 ai.AIProvider
+	executor           *Executor
+	securityController *security.SecurityController
 }
 
 // NewEngine creates a new engine
-func NewEngine(aiProvider ai.AIProvider, executor *Executor) *Engine {
+func NewEngine(aiProvider ai.AIProvider, executor *Executor, securityPolicy *security.SecurityPolicy) *Engine {
 	return &Engine{
-		ai:       aiProvider,
-		executor: executor,
+		ai:                 aiProvider,
+		executor:           executor,
+		securityController: security.NewSecurityController(securityPolicy),
 	}
 }
 
@@ -47,24 +50,40 @@ func (e *Engine) Process(ctx context.Context, input string, systemPrompt string)
 		fmt.Println("⚠️  Proceeding (confirmation will be added in TUI phase)...")
 	}
 
-	// Step 3: Execute commands
+	// Step 3: Execute commands (with security check)
 	for i, cmd := range intent.Commands {
+		// Security check before execution
+		result, err := e.securityController.CheckCommand(cmd)
+		if err != nil {
+			return fmt.Errorf("security check failed: %w", err)
+		}
+
+		if !result.Allowed {
+			fmt.Printf("🚫 拒绝执行: %s\n", result.Reason)
+			continue
+		}
+
+		if result.RequiresAuth {
+			fmt.Printf("⚠️  %s\n", result.Warning)
+			fmt.Println("⚠️  注意: 完整的授权确认将在 Phase 3 (TUI) 中实现")
+		}
+
 		fmt.Printf("\n🔧 Executing [%d/%d]: %s %v\n", i+1, len(intent.Commands), cmd.Cmd, cmd.Args)
 
-		result, err := e.executor.Execute(ctx, cmd)
+		execResult, err := e.executor.Execute(ctx, cmd)
 		if err != nil {
 			fmt.Printf("❌ Error: %v\n", err)
 			continue
 		}
 
 		// Show output (truncated if too long)
-		e.displayOutput(result.Output)
+		e.displayOutput(execResult.Output)
 
 		// Step 4: Analyze result
-		if result.Error != nil {
-			fmt.Printf("📊 Command failed (exit code %d)\n", result.ExitCode)
+		if execResult.Error != nil {
+			fmt.Printf("📊 Command failed (exit code %d)\n", execResult.ExitCode)
 		} else {
-			analysis, err := e.ai.AnalyzeOutput(ctx, cmd.Cmd, result.Output)
+			analysis, err := e.ai.AnalyzeOutput(ctx, cmd.Cmd, execResult.Output)
 			if err != nil {
 				fmt.Printf("⚠️  Could not analyze output\n")
 			} else {

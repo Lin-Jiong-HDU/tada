@@ -9,8 +9,8 @@
 - 🗣️ Natural language interface - just tell it what you want
 - 🧠 AI-powered intent understanding
 - 💾 Session persistence with history
-- 🔒 Configurable security levels (coming in Phase 2)
-- 🔌 Plugin system (coming in Phase 2)
+- 🔒 Security controls - dangerous command detection and path access control
+- 🛡️ Configurable security levels (always/dangerous/never confirmation)
 
 ## Installation
 
@@ -47,6 +47,28 @@ ai:
   max_tokens: 4096
 ```
 
+**Security Configuration (optional):**
+```yaml
+security:
+  command_level: dangerous    # always | dangerous | never
+  restricted_paths:            # Forbidden paths
+    - /etc
+    - /usr/bin
+  readonly_paths:              # Read-only paths
+    - ~/.ssh
+    - ~/.gnupg
+  allow_shell: true            # Allow shell commands
+```
+
+## Security
+
+tada includes built-in security controls to protect against dangerous AI-generated commands:
+
+- 🔒 **Dangerous command detection** - Built-in list + AI judgment
+- 🛡️ **Path access control** - Restrict access to sensitive paths
+- 📝 **Read-only protection** - Protect important files from modification
+- 🔧 **Shell analysis** - Detect potentially dangerous shell operations
+
 ## Usage
 
 ```bash
@@ -66,8 +88,8 @@ See [docs/getting-started.md](docs/getting-started.md) for development setup.
 ## Roadmap
 
 - [x] Phase 1: MVP (CLI + AI + Command Execution)
-- [ ] Phase 2: Plugins + Security
-- [ ] Phase 3: TUI + Async Tasks
+- [x] Phase 2: Security Controls
+- [ ] Phase 3: TUI + Authorization UI
 - [ ] Phase 4: Multiple AI Providers + i18n
 
 ## License

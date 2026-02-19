@@ -81,3 +81,23 @@ func TestSaveConfig(t *testing.T) {
 		t.Errorf("Config file was not created")
 	}
 }
+
+func TestSecurityDefaults(t *testing.T) {
+	oldHome := os.Getenv("HOME")
+	tmpDir, _ := os.MkdirTemp("", "tada-test-*")
+	defer os.RemoveAll(tmpDir)
+	os.Setenv("HOME", tmpDir)
+	defer os.Setenv("HOME", oldHome)
+
+	cfg, err := InitConfig()
+	if err != nil {
+		t.Fatalf("InitConfig failed: %v", err)
+	}
+
+	if cfg.Security.CommandLevel != "dangerous" {
+		t.Errorf("Expected default command_level 'dangerous', got '%s'", cfg.Security.CommandLevel)
+	}
+	if !cfg.Security.AllowShell {
+		t.Error("Expected default allow_shell to be true")
+	}
+}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai/openai"
 	"github.com/Lin-Jiong-HDU/tada/internal/core"
+	"github.com/Lin-Jiong-HDU/tada/internal/core/security"
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
 )
 
@@ -45,7 +46,7 @@ func TestMVP_FullWorkflow_OpenAI(t *testing.T) {
 	// Create engine
 	aiClient := openai.NewClient(apiKey, "glm-4.7", "https://open.bigmodel.cn/api/paas/v4")
 	executor := core.NewExecutor(30 * time.Second)
-	engine := core.NewEngine(aiClient, executor)
+	engine := core.NewEngine(aiClient, executor, security.DefaultPolicy())
 
 	// Test simple command
 	err = engine.Process(context.Background(), "say hello to the world", "")
