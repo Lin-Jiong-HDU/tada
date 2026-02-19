@@ -154,9 +154,32 @@ func (c *Client) callAPI(ctx context.Context, messages []ai.Message) (string, er
 
 // parseIntentResponse parses JSON response into Intent
 func (c *Client) parseIntentResponse(response string) (*ai.Intent, error) {
+	// Clean response - remove markdown code blocks if present
+	cleaned := cleanJSONResponse(response)
+
 	var intent ai.Intent
-	if err := json.Unmarshal([]byte(response), &intent); err != nil {
+	if err := json.Unmarshal([]byte(cleaned), &intent); err != nil {
 		return nil, fmt.Errorf("failed to parse intent: %w", err)
 	}
 	return &intent, nil
+}
+
+// cleanJSONResponse removes markdown code blocks from AI responses
+func cleanJSONResponse(response string) string {
+	// Remove ```json and ``` markers
+	trimmed := response
+
+	// Check for ```json at start
+	if len(trimmed) > 7 && trimmed[:7] == "```json" {
+		trimmed = trimmed[7:]
+	} else if len(trimmed) > 3 && trimmed[:3] == "```" {
+		trimmed = trimmed[3:]
+	}
+
+	// Check for ``` at end
+	if len(trimmed) > 3 && trimmed[len(trimmed)-3:] == "```" {
+		trimmed = trimmed[:len(trimmed)-3]
+	}
+
+	return trimmed
 }

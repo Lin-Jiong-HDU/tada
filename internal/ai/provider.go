@@ -4,21 +4,21 @@ import "context"
 
 // Message represents a chat message
 type Message struct {
-	Role    string // "system" | "user" | "assistant"
-	Content string
+	Role    string `json:"role"`    // "system" | "user" | "assistant"
+	Content string `json:"content"`
 }
 
 // Intent represents the parsed user intent
 type Intent struct {
-	Commands     []Command
-	Reason       string
-	NeedsConfirm bool
+	Commands     []Command `json:"commands"`
+	Reason       string    `json:"reason"`
+	NeedsConfirm bool      `json:"needs_confirm"`
 }
 
 // Command represents a shell command to execute
 type Command struct {
-	Cmd  string
-	Args []string
+	Cmd  string   `json:"cmd"`
+	Args []string `json:"args"`
 }
 
 // AIProvider defines the interface for AI backends
