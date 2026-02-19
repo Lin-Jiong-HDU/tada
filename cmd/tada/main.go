@@ -10,6 +10,7 @@ import (
 	"github.com/Lin-Jiong-HDU/tada/internal/ai/glm"
 	"github.com/Lin-Jiong-HDU/tada/internal/ai/openai"
 	"github.com/Lin-Jiong-HDU/tada/internal/core"
+	"github.com/Lin-Jiong-HDU/tada/internal/core/security"
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
 	"github.com/spf13/cobra"
 )
@@ -56,7 +57,14 @@ var rootCmd = &cobra.Command{
 		}
 
 		executor := core.NewExecutor(30 * time.Second)
-		engine := core.NewEngine(aiProvider, executor)
+
+		// Use security policy from config, or defaults if not set
+		securityPolicy := &cfg.Security
+		if securityPolicy.CommandLevel == "" {
+			securityPolicy = security.DefaultPolicy()
+		}
+
+		engine := core.NewEngine(aiProvider, executor, securityPolicy)
 
 		// Process request
 		if err := engine.Process(context.Background(), input, ""); err != nil {
