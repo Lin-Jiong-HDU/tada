@@ -2,6 +2,7 @@ package security
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
 )
@@ -71,7 +72,7 @@ func (sc *SecurityController) CheckCommand(cmd ai.Command) (*CheckResult, error)
 	// Check 3: Shell command analysis
 	cmdStr := cmd.Cmd
 	if len(cmd.Args) > 0 {
-		cmdStr += " " + cmd.Cmd
+		cmdStr += " " + strings.Join(cmd.Args, " ")
 	}
 	shellResult := sc.shellAnalyzer.Analyze(cmdStr)
 	if !shellResult.Allowed {
