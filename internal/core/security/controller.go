@@ -27,20 +27,22 @@ func NewSecurityController(policy *SecurityPolicy) *SecurityController {
 
 // CheckCommand performs comprehensive security check on a command.
 func (sc *SecurityController) CheckCommand(cmd ai.Command) (*CheckResult, error) {
+	// First, collect all security issues
+	var warnings []string
+	var reasons []string
+	isDangerous := false
+
 	// Check 1: Dangerous command detection
 	if sc.dangerChecker.IsDangerous(cmd) {
-		return &CheckResult{
-			Allowed:      true,
-			RequiresAuth: true,
-			Warning:      fmt.Sprintf("Dangerous command: %s %v", cmd.Cmd, cmd.Args),
-			Reason:       "Command is in the dangerous list",
-		}, nil
+		isDangerous = true
+		warnings = append(warnings, fmt.Sprintf("Dangerous command: %s %v", cmd.Cmd, cmd.Args))
+		reasons = append(reasons, "Command is in the dangerous list")
 	}
 
 	// Check 2: Path access control
 	paths := sc.pathChecker.ExtractPaths(cmd)
 	for _, p := range paths {
-		// Check restricted paths
+		// Check restricted paths (always blocks)
 		if sc.pathChecker.IsRestricted(p) {
 			return &CheckResult{
 				Allowed: false,
@@ -49,18 +51,11 @@ func (sc *SecurityController) CheckCommand(cmd ai.Command) (*CheckResult, error)
 		}
 
 		// Check readonly paths (for write operations)
-		// Determine if this is a write operation by checking for:
-		// 1. Redirect operators in command arguments (>, >>)
-		// 2. Commands that are inherently write operations
 		isWrite := sc.isWriteOperation(cmd)
-
 		if sc.pathChecker.IsReadOnly(p, isWrite) {
-			return &CheckResult{
-				Allowed:      true,
-				RequiresAuth: true,
-				Warning:      fmt.Sprintf("Read-only protection: %s cannot be written", p),
-				Reason:       "Path is in readonly list",
-			}, nil
+			isDangerous = true
+			warnings = append(warnings, fmt.Sprintf("Read-only protection: %s cannot be written", p))
+			reasons = append(reasons, "Path is in readonly list")
 		}
 	}
 
@@ -74,18 +69,33 @@ func (sc *SecurityController) CheckCommand(cmd ai.Command) (*CheckResult, error)
 		return shellResult, nil
 	}
 	if shellResult.RequiresAuth {
-		return shellResult, nil
+		isDangerous = true
+		warnings = append(warnings, shellResult.Warning)
+		reasons = append(reasons, shellResult.Reason)
 	}
 
-	// All checks passed
-	return &CheckResult{
-		Allowed: true,
-	}, nil
+	// Apply CommandLevel policy
+	requiresAuth := sc.shouldRequireAuth(isDangerous)
+
+	// Build final result
+	result := &CheckResult{
+		Allowed:      true,
+		RequiresAuth: requiresAuth,
+	}
+
+	if requiresAuth && len(warnings) > 0 {
+		result.Warning = strings.Join(warnings, "; ")
+	}
+	if len(reasons) > 0 {
+		result.Reason = strings.Join(reasons, "; ")
+	}
+
+	return result, nil
 }
 
 // CheckPathAccess checks if a path can be accessed.
 func (sc *SecurityController) CheckPathAccess(path string, write bool) (*CheckResult, error) {
-	// Check restricted
+	// Check restricted (always blocks)
 	if sc.pathChecker.IsRestricted(path) {
 		return &CheckResult{
 			Allowed: false,
@@ -94,21 +104,46 @@ func (sc *SecurityController) CheckPathAccess(path string, write bool) (*CheckRe
 	}
 
 	// Check readonly
-	if sc.pathChecker.IsReadOnly(path, write) {
-		return &CheckResult{
-			Allowed:      true,
-			RequiresAuth: true,
-			Warning:      fmt.Sprintf("Path %s is read-only", path),
-			Reason:       "Write operation on read-only path",
-		}, nil
+	isDangerous := sc.pathChecker.IsReadOnly(path, write)
+
+	// Apply CommandLevel policy
+	requiresAuth := sc.shouldRequireAuth(isDangerous)
+
+	result := &CheckResult{
+		Allowed:      true,
+		RequiresAuth: requiresAuth,
 	}
 
-	return &CheckResult{Allowed: true}, nil
+	if requiresAuth && isDangerous {
+		result.Warning = fmt.Sprintf("Path %s is read-only", path)
+		result.Reason = "Write operation on read-only path"
+	}
+
+	return result, nil
 }
 
 // AnalyzeShellCommand analyzes a shell command.
 func (sc *SecurityController) AnalyzeShellCommand(cmdStr string) (*CheckResult, error) {
 	return sc.shellAnalyzer.Analyze(cmdStr), nil
+}
+
+// shouldRequireAuth determines if a command requires authorization based on
+// the CommandLevel policy and whether the command is dangerous.
+func (sc *SecurityController) shouldRequireAuth(isDangerous bool) bool {
+	switch sc.policy.CommandLevel {
+	case ConfirmAlways:
+		// Always require confirmation, regardless of danger
+		return true
+	case ConfirmNever:
+		// Never require confirmation (not recommended for production)
+		return false
+	case ConfirmDangerous:
+		// Only require confirmation for dangerous commands
+		return isDangerous
+	default:
+		// Default to safest behavior: require auth for dangerous commands
+		return isDangerous
+	}
 }
 
 // isWriteOperation determines if a command is a write operation.

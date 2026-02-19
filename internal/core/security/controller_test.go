@@ -45,3 +45,104 @@ func TestSecurityController_CheckCommand(t *testing.T) {
 		}
 	})
 }
+
+func TestSecurityController_CommandLevel(t *testing.T) {
+	safeCmd := ai.Command{Cmd: "ls", Args: []string{}}
+	dangerousCmd := ai.Command{Cmd: "rm", Args: []string{"-rf", "/tmp/test"}}
+
+	t.Run("command_level=always requires auth for safe commands", func(t *testing.T) {
+		policy := &SecurityPolicy{
+			CommandLevel: ConfirmAlways,
+			AllowShell:   true,
+		}
+		controller := NewSecurityController(policy)
+
+		result, err := controller.CheckCommand(safeCmd)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		if !result.RequiresAuth {
+			t.Error("Expected safe command to require auth with command_level=always")
+		}
+	})
+
+	t.Run("command_level=always requires auth for dangerous commands", func(t *testing.T) {
+		policy := &SecurityPolicy{
+			CommandLevel: ConfirmAlways,
+			AllowShell:   true,
+		}
+		controller := NewSecurityController(policy)
+
+		result, err := controller.CheckCommand(dangerousCmd)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		if !result.RequiresAuth {
+			t.Error("Expected dangerous command to require auth with command_level=always")
+		}
+	})
+
+	t.Run("command_level=dangerous does not require auth for safe commands", func(t *testing.T) {
+		policy := &SecurityPolicy{
+			CommandLevel: ConfirmDangerous,
+			AllowShell:   true,
+		}
+		controller := NewSecurityController(policy)
+
+		result, err := controller.CheckCommand(safeCmd)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		if result.RequiresAuth {
+			t.Error("Expected safe command to not require auth with command_level=dangerous")
+		}
+	})
+
+	t.Run("command_level=dangerous requires auth for dangerous commands", func(t *testing.T) {
+		policy := &SecurityPolicy{
+			CommandLevel: ConfirmDangerous,
+			AllowShell:   true,
+		}
+		controller := NewSecurityController(policy)
+
+		result, err := controller.CheckCommand(dangerousCmd)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		if !result.RequiresAuth {
+			t.Error("Expected dangerous command to require auth with command_level=dangerous")
+		}
+	})
+
+	t.Run("command_level=never does not require auth for safe commands", func(t *testing.T) {
+		policy := &SecurityPolicy{
+			CommandLevel: ConfirmNever,
+			AllowShell:   true,
+		}
+		controller := NewSecurityController(policy)
+
+		result, err := controller.CheckCommand(safeCmd)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		if result.RequiresAuth {
+			t.Error("Expected safe command to not require auth with command_level=never")
+		}
+	})
+
+	t.Run("command_level=never does not require auth for dangerous commands", func(t *testing.T) {
+		policy := &SecurityPolicy{
+			CommandLevel: ConfirmNever,
+			AllowShell:   true,
+		}
+		controller := NewSecurityController(policy)
+
+		result, err := controller.CheckCommand(dangerousCmd)
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		if result.RequiresAuth {
+			t.Error("Expected dangerous command to not require auth with command_level=never")
+		}
+	})
+}
