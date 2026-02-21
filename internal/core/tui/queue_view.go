@@ -202,10 +202,3 @@ func (r *Renderer) getTaskIndex(mdl *model, taskID string) int {
 	}
 	return 0
 }
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}

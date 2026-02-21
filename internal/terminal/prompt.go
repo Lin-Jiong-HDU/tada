@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
@@ -25,10 +26,10 @@ func Confirm(cmd ai.Command, checkResult *security.CheckResult) (bool, error) {
 // ConfirmWithIO prompts the user with provided IO (for testing)
 func ConfirmWithIO(cmd ai.Command, checkResult *security.CheckResult, input io.Reader, output io.Writer) (bool, error) {
 	if input == nil {
-		input = bufio.NewReader(io.Reader(nil))
+		input = os.Stdin
 	}
 	if output == nil {
-		output = io.Writer(nil)
+		output = os.Stdout
 	}
 
 	// Build command string

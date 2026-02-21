@@ -139,9 +139,7 @@ func (m *Manager) SetTaskResult(taskID string, result *ExecutionResult) error {
 
 	for _, task := range m.tasks {
 		if task.ID == taskID {
-			task.SetResult(result)
-
-			// Update status based on result - validate transition
+			// Determine target status based on result
 			var targetStatus TaskStatus
 			if result.ExitCode == 0 && result.Error == "" {
 				targetStatus = TaskStatusCompleted
@@ -149,11 +147,14 @@ func (m *Manager) SetTaskResult(taskID string, result *ExecutionResult) error {
 				targetStatus = TaskStatusFailed
 			}
 
+			// Validate transition before setting result
 			if !task.CanTransitionTo(targetStatus) {
 				return fmt.Errorf("cannot transition task %s from %s to %s",
 					taskID, task.Status, targetStatus)
 			}
 
+			// Set result and transition status
+			task.SetResult(result)
 			task.TransitionStatus(targetStatus)
 			return m.store.Save(m.tasks)
 		}

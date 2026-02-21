@@ -215,17 +215,12 @@ func (m model) renderFooter() string {
 
 func (m model) groupTasksBySession() map[string][]*queue.Task {
 	grouped := make(map[string][]*queue.Task)
-	currentIdx := 0
 
 	for _, task := range m.tasks {
 		// Only show pending tasks
 		if task.Status == queue.TaskStatusPending {
 			grouped[task.SessionID] = append(grouped[task.SessionID], task)
 		}
-		if task.ID == m.tasks[m.cursor].ID {
-			m.cursor = currentIdx
-		}
-		currentIdx++
 	}
 
 	return grouped

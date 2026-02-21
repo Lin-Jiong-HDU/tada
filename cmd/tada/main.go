@@ -113,14 +113,30 @@ func main() {
 	}
 
 	// For backward compatibility: if first arg is not a known command, treat as chat
-	if len(os.Args) > 1 && os.Args[1] != "chat" && os.Args[1] != "tasks" && os.Args[1] != "help" {
-		// Prepend "chat" to args for backward compatibility
-		args := append([]string{"chat"}, os.Args[1:]...)
-		rootCmd.SetArgs(args)
+	// Check exact match for commands (no path separators) to avoid conflicts with files/directories
+	if len(os.Args) > 1 {
+		arg := os.Args[1]
+		// Only treat as command if it's an exact match without path separators
+		if arg != "chat" && arg != "tasks" && arg != "help" &&
+			!containsPathSeparator(arg) {
+			// Prepend "chat" to args for backward compatibility
+			args := append([]string{"chat"}, os.Args[1:]...)
+			rootCmd.SetArgs(args)
+		}
 	}
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+// containsPathSeparator checks if the string contains path separators
+func containsPathSeparator(s string) bool {
+	for _, ch := range s {
+		if ch == '/' || ch == '\\' {
+			return true
+		}
+	}
+	return false
 }
