@@ -21,6 +21,13 @@ var rootCmd = &cobra.Command{
 	Use:   "tada",
 	Short: "Terminal AI assistant",
 	Long:  "tada - A terminal AI assistant that understands natural language and executes commands",
+}
+
+// chatCmd is the default chat command
+var chatCmd = &cobra.Command{
+	Use:   "chat [prompt]",
+	Short: "Chat with AI assistant",
+	Long:  "Chat with the AI assistant - understands natural language and executes commands",
 	Args:  cobra.MinimumNArgs(1),
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		_, err := storage.InitConfig()
@@ -75,10 +82,30 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolVarP(&incognito, "incognito", "i", false, "Run in incognito mode (don't save history)")
+	// Add subcommands
+	rootCmd.AddCommand(chatCmd)
+	rootCmd.AddCommand(getTasksCommand())
+
+	chatCmd.PersistentFlags().BoolVarP(&incognito, "incognito", "i", false, "Run in incognito mode (don't save history)")
 }
 
 func main() {
+	// If no args, run chat command with help
+	if len(os.Args) == 1 {
+		if err := rootCmd.Execute(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	// For backward compatibility: if first arg is not a known command, treat as chat
+	if len(os.Args) > 1 && os.Args[1] != "chat" && os.Args[1] != "tasks" && os.Args[1] != "help" {
+		// Prepend "chat" to args for backward compatibility
+		args := append([]string{"chat"}, os.Args[1:]...)
+		rootCmd.SetArgs(args)
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
