@@ -200,5 +200,5 @@ func (r *Renderer) getTaskIndex(mdl *model, taskID string) int {
 			return i
 		}
 	}
-	return 0
+	return -1
 }
