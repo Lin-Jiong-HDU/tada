@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
 	"github.com/Lin-Jiong-HDU/tada/internal/core/tui"
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 

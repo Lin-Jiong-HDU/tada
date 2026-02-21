@@ -1,8 +1,8 @@
 package tui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // AuthorizeResultMsg is sent when authorization completes

@@ -3,9 +3,9 @@ package tui
 import (
 	"fmt"
 
+	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
 )
 
 // model is the Bubble Tea model for the queue TUI

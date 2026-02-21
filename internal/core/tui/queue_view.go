@@ -3,8 +3,8 @@ package tui
 import (
 	"fmt"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // Renderer handles TUI rendering
