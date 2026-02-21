@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/Lin-Jiong-HDU/tada/internal/core"
+	"github.com/Lin-Jiong-HDU/tada/internal/core/execution"
 	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
 	"github.com/Lin-Jiong-HDU/tada/internal/core/tui"
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
@@ -47,14 +51,24 @@ func runTasks(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Create handlers that persist to the appropriate queue
+	// Create handlers that persist to the appropriate queue and execute
 	onAuthorize := func(taskID string) tea.Cmd {
 		return func() tea.Msg {
 			q := findQueueForTask(queues, taskID)
 			if q != nil {
+				// Approve the task
 				if err := q.ApproveTask(taskID); err != nil {
 					return tui.AuthorizeResultMsg{TaskID: taskID, Success: false}
 				}
+
+				// Execute the task immediately
+				ctx := context.Background()
+				executor := core.NewExecutor(30 * time.Second)
+				taskExecutor := execution.NewTaskExecutor(q, executor)
+
+				go func() {
+					_ = taskExecutor.ExecuteTask(ctx, taskID)
+				}()
 			}
 			return tui.AuthorizeResultMsg{TaskID: taskID, Success: true}
 		}

@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
 	tea "github.com/charmbracelet/bubbletea"
@@ -70,12 +71,31 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case AuthorizeResultMsg:
 		if msg.Success {
-			// Update task status
+			// Update task status to executing (will be updated by background executor)
 			for i, task := range m.tasks {
 				if task.ID == msg.TaskID {
-					m.tasks[i].Status = queue.TaskStatusApproved
-					break
+					// Create a copy with updated status
+					updatedTask := *task
+					updatedTask.Status = queue.TaskStatusExecuting
+					m.tasks[i] = &updatedTask
+
+					// Start a ticker to check for status updates
+					return m, tea.Tick(time.Second*2, func(t time.Time) tea.Msg {
+						return StatusCheckMsg{TaskID: msg.TaskID}
+					})
 				}
+			}
+		}
+		return m, nil
+
+	case StatusCheckMsg:
+		// Check if task is still executing or completed
+		for _, task := range m.tasks {
+			if task.ID == msg.TaskID && task.Status == queue.TaskStatusExecuting {
+				// In real implementation, we'd check the queue for status updates
+				// For now, simulate completion after status check
+				// The queue will have the actual status
+				return m, nil
 			}
 		}
 		return m, nil
@@ -230,8 +250,8 @@ func (m model) groupTasksBySession() map[string][]*queue.Task {
 	grouped := make(map[string][]*queue.Task)
 
 	for _, task := range m.tasks {
-		// Only show pending tasks
-		if task.Status == queue.TaskStatusPending {
+		// Show pending and executing tasks
+		if task.Status == queue.TaskStatusPending || task.Status == queue.TaskStatusExecuting {
 			grouped[task.SessionID] = append(grouped[task.SessionID], task)
 		}
 	}
