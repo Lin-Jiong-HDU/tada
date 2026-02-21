@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
 	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
@@ -31,6 +32,21 @@ func NewEngine(aiProvider ai.AIProvider, executor *Executor, securityPolicy *sec
 // SetQueue sets the task queue for async commands
 func (e *Engine) SetQueue(q *queue.Manager) {
 	e.queue = q
+}
+
+// parseAsyncSyntax checks if the input ends with & for async execution
+func parseAsyncSyntax(input string) bool {
+	trimmed := strings.TrimSpace(input)
+	return strings.HasSuffix(trimmed, "&")
+}
+
+// stripAsyncSyntax removes trailing & from input
+func stripAsyncSyntax(input string) string {
+	trimmed := strings.TrimSpace(input)
+	if strings.HasSuffix(trimmed, "&") {
+		return strings.TrimSpace(trimmed[:len(trimmed)-1])
+	}
+	return trimmed
 }
 
 // Process handles a user request from input to output

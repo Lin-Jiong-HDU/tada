@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,6 +11,23 @@ import (
 	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
 	"github.com/Lin-Jiong-HDU/tada/internal/core/security"
 )
+
+// Mock AI provider for testing
+type mockAIProvider struct {
+	intent *ai.Intent
+}
+
+func (m *mockAIProvider) ParseIntent(ctx context.Context, input string, systemPrompt string) (*ai.Intent, error) {
+	return m.intent, nil
+}
+
+func (m *mockAIProvider) AnalyzeOutput(ctx context.Context, cmd string, output string) (string, error) {
+	return "done", nil
+}
+
+func (m *mockAIProvider) Chat(ctx context.Context, messages []ai.Message) (string, error) {
+	return "response", nil
+}
 
 func TestEngine_SetQueue(t *testing.T) {
 	// Create temporary session
@@ -60,5 +78,69 @@ func TestEngine_Process_AsyncCommandGoesToQueue(t *testing.T) {
 		if task.Status != queue.TaskStatusPending {
 			t.Error("Expected task to be pending")
 		}
+	}
+}
+
+func TestEngine_ParseAsyncSyntax(t *testing.T) {
+	executor := NewExecutor(5)
+	policy := security.DefaultPolicy()
+	_ = NewEngine(&mockAIProvider{}, executor, policy)
+
+	tests := []struct {
+		name     string
+		input    string
+		wantAsync bool
+	}{
+		{
+			name:     "sync command without &",
+			input:    "create a folder",
+			wantAsync: false,
+		},
+		{
+			name:     "async command with &",
+			input:    "create a folder &",
+			wantAsync: true,
+		},
+		{
+			name:     "async with multiple & &",
+			input:    "create a folder & &",
+			wantAsync: true,
+		},
+		{
+			name:     "async with space before &",
+			input:    "create a folder & ",
+			wantAsync: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			isAsync := parseAsyncSyntax(tt.input)
+			if isAsync != tt.wantAsync {
+				t.Errorf("parseAsyncSyntax() = %v, want %v", isAsync, tt.wantAsync)
+			}
+		})
+	}
+}
+
+func TestEngine_StripAsyncSyntax(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"create folder &", "create folder"},
+		{"create folder&", "create folder"},
+		{"create folder & ", "create folder"},
+		{"create folder & &", "create folder &"},
+		{"no async here", "no async here"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := stripAsyncSyntax(tt.input)
+			if result != tt.expected {
+				t.Errorf("stripAsyncSyntax() = %q, want %q", result, tt.expected)
+			}
+		})
 	}
 }
