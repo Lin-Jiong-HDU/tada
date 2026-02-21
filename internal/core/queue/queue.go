@@ -141,13 +141,20 @@ func (m *Manager) SetTaskResult(taskID string, result *ExecutionResult) error {
 		if task.ID == taskID {
 			task.SetResult(result)
 
-			// Update status based on result
+			// Update status based on result - validate transition
+			var targetStatus TaskStatus
 			if result.ExitCode == 0 && result.Error == "" {
-				task.TransitionStatus(TaskStatusCompleted)
+				targetStatus = TaskStatusCompleted
 			} else {
-				task.TransitionStatus(TaskStatusFailed)
+				targetStatus = TaskStatusFailed
 			}
 
+			if !task.CanTransitionTo(targetStatus) {
+				return fmt.Errorf("cannot transition task %s from %s to %s",
+					taskID, task.Status, targetStatus)
+			}
+
+			task.TransitionStatus(targetStatus)
 			return m.store.Save(m.tasks)
 		}
 	}
