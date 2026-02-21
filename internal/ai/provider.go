@@ -17,8 +17,9 @@ type Intent struct {
 
 // Command represents a shell command to execute
 type Command struct {
-	Cmd  string   `json:"cmd"`
-	Args []string `json:"args"`
+	Cmd     string   `json:"cmd"`
+	Args    []string `json:"args"`
+	IsAsync bool     `json:"is_async"` // Indicates async execution requiring queue authorization
 }
 
 // AIProvider defines the interface for AI backends
