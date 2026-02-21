@@ -83,7 +83,7 @@ func defaultKeyMap() keyMap {
 		},
 		Authorize: key{
 			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'a'}},
-			help: "授权选中",
+			help: "授权并执行",
 		},
 		Reject: key{
 			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'r'}},
@@ -91,7 +91,7 @@ func defaultKeyMap() keyMap {
 		},
 		AuthorizeAll: key{
 			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'A'}},
-			help: "全部授权",
+			help: "全部执行",
 		},
 		RejectAll: key{
 			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'R'}},
