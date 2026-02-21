@@ -77,17 +77,12 @@ func (e *Engine) Process(ctx context.Context, input string, systemPrompt string)
 		}
 	}
 
-	fmt.Printf("📝 Plan: %s\n", intent.Reason)
-
-	// Step 2: Confirm if needed
-	if intent.NeedsConfirm {
-		// TODO: Implement TUI confirmation
-		fmt.Println("⚠️  This command requires confirmation.")
-		// For MVP, auto-confirm with warning
-		fmt.Println("⚠️  Proceeding (confirmation will be added in TUI phase)...")
+	// Only show plan for synchronous commands
+	if !isAsync {
+		fmt.Printf("📝 Plan: %s\n", intent.Reason)
 	}
 
-	// Step 3: Execute commands (with security check)
+	// Step 2: Execute commands (with security check)
 	for i, cmd := range intent.Commands {
 		// Security check before execution
 		result, err := e.securityController.CheckCommand(cmd)
@@ -100,22 +95,22 @@ func (e *Engine) Process(ctx context.Context, input string, systemPrompt string)
 			continue
 		}
 
-		if result.RequiresAuth {
-			if cmd.IsAsync {
-				// Add to queue for async commands
-				if e.queue != nil {
-					task, err := e.queue.AddTask(cmd, result)
-					if err != nil {
-						return fmt.Errorf("failed to queue task: %w", err)
-					}
-					fmt.Printf("📋 命令已加入队列 (ID: %s)\n", task.ID)
-					fmt.Printf("   使用 'tada tasks' 查看并授权\n")
-					continue
+		// Handle async commands - always queue them
+		if cmd.IsAsync {
+			if e.queue != nil {
+				task, err := e.queue.AddTask(cmd, result)
+				if err != nil {
+					return fmt.Errorf("failed to queue task: %w", err)
 				}
-				// Fall through to sync prompt if no queue
+				fmt.Printf("📋 命令已加入队列 (ID: %s)\n", task.ID)
+				fmt.Printf("   使用 'tada tasks' 查看并授权\n")
+				continue
 			}
+			// Fall through to sync execution if no queue available
+		}
 
-			// Sync command: prompt for confirmation
+		// Sync commands requiring auth: prompt for confirmation
+		if result.RequiresAuth {
 			confirmed, err := terminal.Confirm(cmd, result)
 			if err == terminal.ErrQuitAll {
 				fmt.Println("✗ 取消全部操作")
