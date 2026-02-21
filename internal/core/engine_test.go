@@ -171,3 +171,45 @@ func TestEngine_Process_SetsIsAsyncFlag(t *testing.T) {
 		t.Errorf("Expected 'create test', got '%s'", stripped)
 	}
 }
+
+func TestEngine_AsyncQueuesWithoutConfirmation(t *testing.T) {
+	tmpDir, _ := os.MkdirTemp("", "tada-async-test-*")
+	defer os.RemoveAll(tmpDir)
+
+	queueFile := filepath.Join(tmpDir, "queue.json")
+	q := queue.NewQueue(queueFile, "test-session")
+
+	cmd := ai.Command{Cmd: "mkdir", Args: []string{"test"}, IsAsync: true}
+	intent := &ai.Intent{
+		Commands:     []ai.Command{cmd},
+		Reason:       "create directory async",
+		NeedsConfirm: false,
+	}
+
+	executor := NewExecutor(5)
+	policy := security.DefaultPolicy()
+	policy.CommandLevel = security.ConfirmAlways // Require confirmation for all
+	engine := NewEngine(&mockAIProvider{intent: intent}, executor, policy)
+	engine.SetQueue(q)
+
+	ctx := context.Background()
+	err := engine.Process(ctx, "create test &", "")
+
+	if err != nil {
+		t.Fatalf("Process failed: %v", err)
+	}
+
+	// Verify task was queued
+	tasks := q.GetAllTasks()
+	if len(tasks) != 1 {
+		t.Fatalf("Expected 1 task, got %d", len(tasks))
+	}
+
+	if tasks[0].Status != queue.TaskStatusPending {
+		t.Errorf("Expected pending status, got %s", tasks[0].Status)
+	}
+
+	if !tasks[0].Command.IsAsync {
+		t.Error("Expected IsAsync to be true")
+	}
+}
