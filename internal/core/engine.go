@@ -5,8 +5,10 @@ import (
 	"fmt"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
+	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
 	"github.com/Lin-Jiong-HDU/tada/internal/core/security"
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
+	"github.com/Lin-Jiong-HDU/tada/internal/terminal"
 )
 
 // Engine orchestrates the AI workflow
@@ -14,6 +16,7 @@ type Engine struct {
 	ai                 ai.AIProvider
 	executor           *Executor
 	securityController *security.SecurityController
+	queue              *queue.Manager
 }
 
 // NewEngine creates a new engine
@@ -23,6 +26,11 @@ func NewEngine(aiProvider ai.AIProvider, executor *Executor, securityPolicy *sec
 		executor:           executor,
 		securityController: security.NewSecurityController(securityPolicy),
 	}
+}
+
+// SetQueue sets the task queue for async commands
+func (e *Engine) SetQueue(q *queue.Manager) {
+	e.queue = q
 }
 
 // Process handles a user request from input to output
@@ -64,8 +72,32 @@ func (e *Engine) Process(ctx context.Context, input string, systemPrompt string)
 		}
 
 		if result.RequiresAuth {
-			fmt.Printf("⚠️  %s\n", result.Warning)
-			fmt.Println("⚠️  注意: 完整的授权确认将在 Phase 3 (TUI) 中实现")
+			if cmd.IsAsync {
+				// Add to queue for async commands
+				if e.queue != nil {
+					task, err := e.queue.AddTask(cmd, result)
+					if err != nil {
+						return fmt.Errorf("failed to queue task: %w", err)
+					}
+					fmt.Printf("📋 命令已加入队列 (ID: %s)\n", task.ID)
+					fmt.Printf("   使用 'tada tasks' 查看并授权\n")
+					continue
+				}
+				// Fall through to sync prompt if no queue
+			}
+
+			// Sync command: prompt for confirmation
+			confirmed, err := terminal.Confirm(cmd, result)
+			if err == terminal.ErrQuitAll {
+				fmt.Println("✗ 取消全部操作")
+				return nil
+			}
+			if err != nil {
+				return fmt.Errorf("confirmation error: %w", err)
+			}
+			if !confirmed {
+				continue
+			}
 		}
 
 		fmt.Printf("\n🔧 Executing [%d/%d]: %s %v\n", i+1, len(intent.Commands), cmd.Cmd, cmd.Args)

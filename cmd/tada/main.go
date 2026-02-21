@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
 	"github.com/Lin-Jiong-HDU/tada/internal/ai/glm"
 	"github.com/Lin-Jiong-HDU/tada/internal/ai/openai"
 	"github.com/Lin-Jiong-HDU/tada/internal/core"
+	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
 	"github.com/Lin-Jiong-HDU/tada/internal/core/security"
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
 	"github.com/spf13/cobra"
@@ -72,6 +74,17 @@ var chatCmd = &cobra.Command{
 		}
 
 		engine := core.NewEngine(aiProvider, executor, securityPolicy)
+
+		// Initialize queue with current session
+		if !incognito {
+			session := storage.GetCurrentSession()
+			if session != nil {
+				configDir, _ := storage.GetConfigDir()
+				queueFile := filepath.Join(configDir, storage.SessionDirName, session.ID, "queue.json")
+				q := queue.NewQueue(queueFile, session.ID)
+				engine.SetQueue(q)
+			}
+		}
 
 		// Process request
 		if err := engine.Process(context.Background(), input, ""); err != nil {
