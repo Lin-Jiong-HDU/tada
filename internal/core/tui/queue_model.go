@@ -205,7 +205,7 @@ func (m model) renderQueue() string {
 
 func (m model) renderHelp() string {
 	return helpStyle.Render(`
-按 q 返回队列
+按 q 退出程序
 `) + "\n"
 }
 
