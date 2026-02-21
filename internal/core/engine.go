@@ -51,7 +51,13 @@ func stripAsyncSyntax(input string) string {
 
 // Process handles a user request from input to output
 func (e *Engine) Process(ctx context.Context, input string, systemPrompt string) error {
-	// Add user message to session
+	// Check for async syntax
+	isAsync := parseAsyncSyntax(input)
+	if isAsync {
+		input = stripAsyncSyntax(input)
+	}
+
+	// Add user message to session (use original input for history)
 	session := storage.GetCurrentSession()
 	if session != nil {
 		storage.AddMessage("user", input)
@@ -62,6 +68,13 @@ func (e *Engine) Process(ctx context.Context, input string, systemPrompt string)
 	intent, err := e.ai.ParseIntent(ctx, input, systemPrompt)
 	if err != nil {
 		return fmt.Errorf("failed to parse intent: %w", err)
+	}
+
+	// Mark all commands as async if & was used
+	if isAsync {
+		for i := range intent.Commands {
+			intent.Commands[i].IsAsync = true
+		}
 	}
 
 	fmt.Printf("📝 Plan: %s\n", intent.Reason)

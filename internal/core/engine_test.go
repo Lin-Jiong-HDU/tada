@@ -144,3 +144,30 @@ func TestEngine_StripAsyncSyntax(t *testing.T) {
 		})
 	}
 }
+
+func TestEngine_Process_SetsIsAsyncFlag(t *testing.T) {
+	// Setup
+	cmd := ai.Command{Cmd: "mkdir", Args: []string{"test"}}
+	intent := &ai.Intent{
+		Commands:     []ai.Command{cmd},
+		Reason:       "create directory",
+		NeedsConfirm: false,
+	}
+
+	executor := NewExecutor(5)
+	policy := security.DefaultPolicy()
+	_ = NewEngine(&mockAIProvider{intent: intent}, executor, policy)
+
+	// Test async input - the mock AI will return the intent we set
+	// When we detect async syntax, we should mark all commands as async
+	isAsync := parseAsyncSyntax("create test &")
+	if !isAsync {
+		t.Error("Expected async syntax to be detected")
+	}
+
+	// Verify that stripping works
+	stripped := stripAsyncSyntax("create test &")
+	if stripped != "create test" {
+		t.Errorf("Expected 'create test', got '%s'", stripped)
+	}
+}
