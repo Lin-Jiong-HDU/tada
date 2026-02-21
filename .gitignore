@@ -39,3 +39,6 @@ go.work.sum
 
 # Air live reload tool
 tmp/
+
+# Git worktrees
+.worktrees/
