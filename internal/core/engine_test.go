@@ -87,28 +87,28 @@ func TestEngine_ParseAsyncSyntax(t *testing.T) {
 	_ = NewEngine(&mockAIProvider{}, executor, policy)
 
 	tests := []struct {
-		name     string
-		input    string
+		name      string
+		input     string
 		wantAsync bool
 	}{
 		{
-			name:     "sync command without &",
-			input:    "create a folder",
+			name:      "sync command without &",
+			input:     "create a folder",
 			wantAsync: false,
 		},
 		{
-			name:     "async command with &",
-			input:    "create a folder &",
+			name:      "async command with &",
+			input:     "create a folder &",
 			wantAsync: true,
 		},
 		{
-			name:     "async with multiple & &",
-			input:    "create a folder & &",
+			name:      "async with multiple & &",
+			input:     "create a folder & &",
 			wantAsync: true,
 		},
 		{
-			name:     "async with space before &",
-			input:    "create a folder & ",
+			name:      "async with space before &",
+			input:     "create a folder & ",
 			wantAsync: true,
 		},
 	}

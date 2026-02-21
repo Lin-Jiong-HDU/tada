@@ -106,10 +106,10 @@ func TestAsync_SyntaxEdgeCases(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		input    string
+		name      string
+		input     string
 		wantAsync bool
-		expected string
+		expected  string
 	}{
 		{"multiple ampersands", "command && &", true, "command &&"},
 		{"ampersand in middle", "command & stuff", false, "command & stuff"},
