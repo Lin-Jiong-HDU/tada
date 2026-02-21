@@ -72,14 +72,33 @@ tada includes built-in security controls to protect against dangerous AI-generat
 ## Usage
 
 ```bash
-# Simple commands
+# Simple commands (synchronous)
 tada "list all files in the current directory"
 tada "create a new folder named docs"
-tada "say hello to the world"
+
+# Async commands (queue for later execution)
+tada "create a new folder named tmp &"
+tada "download large file &"
+
+# View and authorize pending tasks
+tada tasks
+
+# Execute all approved tasks
+tada run
 
 # Incognito mode (no history saved)
 tada -i "run a secret command"
 ```
+
+### Async Execution
+
+Add `&` at the end of your command to run it asynchronously:
+
+```bash
+tada "long running task &"
+```
+
+Async commands are queued without immediate confirmation. Use `tada tasks` to review and authorize them. Authorized tasks execute immediately in the TUI, or use `tada run` for batch execution.
 
 ## Development
 

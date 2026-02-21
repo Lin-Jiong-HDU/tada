@@ -60,6 +60,43 @@ go test ./...
 TADA_INTEGRATION_TEST=1 OPENAI_API_KEY=your-key go test ./...
 ```
 
+## Async Execution
+
+For long-running commands, use async mode:
+
+```bash
+tada "compile project &"
+```
+
+The command will be queued. Use `tada tasks` to:
+
+1. View pending commands
+2. Authorize (a) or reject (r) individual commands
+3. Authorize all (A) or reject all (R)
+
+Authorized tasks execute immediately. For batch execution, use:
+
+```bash
+tada run
+```
+
+This executes all approved tasks that haven't been run yet.
+
+### Async Workflow
+
+```bash
+# Queue multiple async commands
+tada "download data &"
+tada "process data &"
+tada "generate report &"
+
+# Review and authorize in TUI
+tada tasks
+
+# Or batch execute later
+tada run
+```
+
 ## Security Configuration
 
 tada includes security controls to protect against dangerous AI-generated commands.
