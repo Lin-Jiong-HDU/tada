@@ -13,6 +13,7 @@
 ## Task 1: Parse Async Syntax `&`
 
 **Files:**
+
 - Modify: `internal/core/engine.go:36-59` (Process method)
 - Test: `internal/core/engine_test.go` (create if not exists)
 
@@ -175,6 +176,7 @@ git commit -m "feat: add async syntax parser for & suffix"
 ## Task 2: Set IsAsync Flag Based on Syntax
 
 **Files:**
+
 - Modify: `internal/core/engine.go:36-59` (Process method)
 - Test: `internal/core/engine_test.go`
 
@@ -280,12 +282,14 @@ git commit -m "feat: set IsAsync flag when & suffix detected"
 ## Task 3: Skip Confirmation for Async Commands
 
 **Files:**
+
 - Modify: `internal/core/engine.go:74-101` (Process method security check section)
 - Test: `internal/core/engine_test.go`
 
 **Step 1: Verify current behavior**
 
 Current code at lines 74-101:
+
 ```go
 if result.RequiresAuth {
 	if cmd.IsAsync {
@@ -379,6 +383,7 @@ git commit -m "test: verify async commands queue without confirmation"
 ## Task 4: Add Task Executor Function
 
 **Files:**
+
 - Create: `internal/core/queue/executor.go`
 - Test: `internal/core/queue/executor_test.go`
 
@@ -635,6 +640,7 @@ git commit -m "feat(queue): add task executor for running approved tasks"
 ## Task 5: Integrate Execution into TUI
 
 **Files:**
+
 - Modify: `cmd/tada/tasks.go:50-74` (TUI authorize handler)
 - Modify: `internal/core/tui/queue_model.go:66-96` (Update method)
 
@@ -668,6 +674,7 @@ onAuthorize := func(taskID string) tea.Cmd {
 ```
 
 Add context import:
+
 ```go
 import (
 	"context"
@@ -718,6 +725,7 @@ type StatusCheckMsg struct {
 ```
 
 Add to queue_model.go imports:
+
 ```go
 import (
 	"fmt"
@@ -771,6 +779,7 @@ git commit -m "feat(tui): execute tasks immediately on approval"
 ## Task 6: Add `tada run` Command
 
 **Files:**
+
 - Create: `cmd/tada/run.go`
 - Modify: `cmd/tada/main.go:97-103` (init function)
 
@@ -963,6 +972,7 @@ git commit -m "feat(cli): add run command for batch execution"
 ## Task 7: Update TUI Keys Help Text
 
 **Files:**
+
 - Modify: `internal/core/tui/keys.go:1276-1315` (defaultKeyMap function)
 
 **Step 1: Update key bindings help**
@@ -1024,6 +1034,7 @@ git commit -m "docs(tui): update key help text for execution behavior"
 ## Task 8: Full Integration Testing
 
 **Files:**
+
 - Create: `tests/e2e/async_test.go`
 
 **Step 1: Write E2E test**
@@ -1144,6 +1155,7 @@ Note: This test uses parseAsyncSyntax and stripAsyncSyntax which are not exporte
 Option: Export the async parsing functions by capitalizing them:
 
 In `internal/core/engine.go`, rename:
+
 - `parseAsyncSyntax` → `ParseAsyncSyntax`
 - `stripAsyncSyntax` → `StripAsyncSyntax`
 
@@ -1167,6 +1179,7 @@ git commit -m "test(e2e): add async workflow integration test"
 ## Task 9: Update Documentation
 
 **Files:**
+
 - Modify: `README.md`
 - Modify: `docs/getting-started.md`
 
@@ -1174,7 +1187,7 @@ git commit -m "test(e2e): add async workflow integration test"
 
 Add async execution section to README:
 
-```markdown
+````markdown
 ## Usage
 
 ```bash
@@ -1195,6 +1208,7 @@ tada run
 # Incognito mode (no history saved)
 tada -i "run a secret command"
 ```
+````
 
 ### Async Execution
 
@@ -1205,7 +1219,8 @@ tada "long running task &"
 ```
 
 Async commands are queued without immediate confirmation. Use `tada tasks` to review and authorize them. Authorized tasks execute immediately in the TUI, or use `tada run` for batch execution.
-```
+
+````
 
 **Step 2: Update getting-started guide**
 
@@ -1218,7 +1233,7 @@ For long-running commands, use async mode:
 
 ```bash
 tada "compile project &"
-```
+````
 
 The command will be queued. Use `tada tasks` to:
 
@@ -1233,20 +1248,22 @@ tada run
 ```
 
 This executes all approved tasks that haven't been run yet.
-```
+
+````
 
 **Step 3: Commit**
 
 ```bash
 git add README.md docs/getting-started.md
 git commit -m "docs: add async execution documentation"
-```
+````
 
 ---
 
 ## Task 10: Verify and Clean Up
 
 **Files:**
+
 - All modified files
 
 **Step 1: Run full test suite**
@@ -1315,6 +1332,7 @@ This implementation adds:
 5. **Status Tracking** - Tasks show executing/completed/failed status in TUI
 
 **User Workflow:**
+
 ```bash
 # Queue async command
 tada "download file &"
