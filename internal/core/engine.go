@@ -34,14 +34,14 @@ func (e *Engine) SetQueue(q *queue.Manager) {
 	e.queue = q
 }
 
-// parseAsyncSyntax checks if the input ends with & for async execution
-func parseAsyncSyntax(input string) bool {
+// ParseAsyncSyntax checks if the input ends with & for async execution
+func ParseAsyncSyntax(input string) bool {
 	trimmed := strings.TrimSpace(input)
 	return strings.HasSuffix(trimmed, "&")
 }
 
-// stripAsyncSyntax removes trailing & from input
-func stripAsyncSyntax(input string) string {
+// StripAsyncSyntax removes trailing & from input
+func StripAsyncSyntax(input string) string {
 	trimmed := strings.TrimSpace(input)
 	if strings.HasSuffix(trimmed, "&") {
 		return strings.TrimSpace(trimmed[:len(trimmed)-1])
@@ -52,9 +52,9 @@ func stripAsyncSyntax(input string) string {
 // Process handles a user request from input to output
 func (e *Engine) Process(ctx context.Context, input string, systemPrompt string) error {
 	// Check for async syntax
-	isAsync := parseAsyncSyntax(input)
+	isAsync := ParseAsyncSyntax(input)
 	if isAsync {
-		input = stripAsyncSyntax(input)
+		input = StripAsyncSyntax(input)
 	}
 
 	// Add user message to session (use original input for history)

@@ -115,9 +115,9 @@ func TestEngine_ParseAsyncSyntax(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			isAsync := parseAsyncSyntax(tt.input)
+			isAsync := ParseAsyncSyntax(tt.input)
 			if isAsync != tt.wantAsync {
-				t.Errorf("parseAsyncSyntax() = %v, want %v", isAsync, tt.wantAsync)
+				t.Errorf("ParseAsyncSyntax() = %v, want %v", isAsync, tt.wantAsync)
 			}
 		})
 	}
@@ -137,9 +137,9 @@ func TestEngine_StripAsyncSyntax(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := stripAsyncSyntax(tt.input)
+			result := StripAsyncSyntax(tt.input)
 			if result != tt.expected {
-				t.Errorf("stripAsyncSyntax() = %q, want %q", result, tt.expected)
+				t.Errorf("StripAsyncSyntax() = %q, want %q", result, tt.expected)
 			}
 		})
 	}
@@ -160,13 +160,13 @@ func TestEngine_Process_SetsIsAsyncFlag(t *testing.T) {
 
 	// Test async input - the mock AI will return the intent we set
 	// When we detect async syntax, we should mark all commands as async
-	isAsync := parseAsyncSyntax("create test &")
+	isAsync := ParseAsyncSyntax("create test &")
 	if !isAsync {
 		t.Error("Expected async syntax to be detected")
 	}
 
 	// Verify that stripping works
-	stripped := stripAsyncSyntax("create test &")
+	stripped := StripAsyncSyntax("create test &")
 	if stripped != "create test" {
 		t.Errorf("Expected 'create test', got '%s'", stripped)
 	}
