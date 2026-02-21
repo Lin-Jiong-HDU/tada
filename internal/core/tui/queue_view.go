@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
 	"github.com/charmbracelet/lipgloss"
@@ -171,7 +172,7 @@ func (r *Renderer) renderStatus(status queue.TaskStatus) string {
 func (r *Renderer) renderCommand(task *queue.Task) string {
 	cmdStr := task.Command.Cmd
 	if len(task.Command.Args) > 0 {
-		cmdStr += " " + fmt.Sprint(task.Command.Args)
+		cmdStr += " " + strings.Join(task.Command.Args, " ")
 	}
 
 	// Truncate if too long

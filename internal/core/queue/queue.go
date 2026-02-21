@@ -2,6 +2,7 @@ package queue
 
 import (
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
@@ -20,8 +21,12 @@ type Manager struct {
 func NewQueue(filePath string, sessionID string) *Manager {
 	store := NewStore(filePath)
 
-	// Load existing tasks
-	tasks, _ := store.Load()
+	// Load existing tasks - log warning but continue on error
+	tasks, err := store.Load()
+	if err != nil {
+		log.Printf("Warning: failed to load queue from %s: %v (starting with empty queue)", filePath, err)
+		tasks = nil
+	}
 
 	return &Manager{
 		sessionID: sessionID,
@@ -125,6 +130,10 @@ func (m *Manager) MarkExecuting(taskID string) error {
 
 	for _, task := range m.tasks {
 		if task.ID == taskID {
+			if !task.CanTransitionTo(TaskStatusExecuting) {
+				return fmt.Errorf("cannot transition task %s from %s to executing",
+					taskID, task.Status)
+			}
 			task.TransitionStatus(TaskStatusExecuting)
 			return m.store.Save(m.tasks)
 		}

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
 	tea "github.com/charmbracelet/bubbletea"
@@ -21,14 +22,26 @@ type model struct {
 
 // NewModel creates a new queue UI model
 func NewModel(tasks []*queue.Task) Model {
+	return NewModelWithOptions(tasks, nil, nil)
+}
+
+// NewModelWithOptions creates a new queue UI model with custom authorize/reject handlers
+func NewModelWithOptions(tasks []*queue.Task, onAuthorize, onReject func(string) tea.Cmd) Model {
+	if onAuthorize == nil {
+		onAuthorize = defaultAuthorizeHandler
+	}
+	if onReject == nil {
+		onReject = defaultRejectHandler
+	}
+
 	return model{
 		tasks:       tasks,
 		cursor:      0,
 		selected:    make(map[string]struct{}),
 		keys:        defaultKeyMap(),
 		showingHelp: false,
-		onAuthorize: defaultAuthorizeHandler,
-		onReject:    defaultRejectHandler,
+		onAuthorize: onAuthorize,
+		onReject:    onReject,
 	}
 }
 
@@ -180,7 +193,7 @@ func (m model) renderQueue() string {
 			// Command string
 			cmdStr := task.Command.Cmd
 			if len(task.Command.Args) > 0 {
-				cmdStr += " " + fmt.Sprint(task.Command.Args)
+				cmdStr += " " + strings.Join(task.Command.Args, " ")
 			}
 
 			// Truncate if too long

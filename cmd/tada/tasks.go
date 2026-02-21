@@ -33,8 +33,8 @@ func runTasks(cmd *cobra.Command, args []string) error {
 
 	sessionsDir := filepath.Join(configDir, storage.SessionDirName)
 
-	// Load all queue files
-	allTasks, err := loadAllTasks(sessionsDir)
+	// Load all queues and tasks
+	queues, allTasks, err := loadAllQueues(sessionsDir)
 	if err != nil {
 		return fmt.Errorf("failed to load tasks: %w", err)
 	}
@@ -47,8 +47,33 @@ func runTasks(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Create TUI model
-	model := tui.NewModel(pendingTasks)
+	// Create handlers that persist to the appropriate queue
+	onAuthorize := func(taskID string) tea.Cmd {
+		return func() tea.Msg {
+			q := findQueueForTask(queues, taskID)
+			if q != nil {
+				if err := q.ApproveTask(taskID); err != nil {
+					return tui.AuthorizeResultMsg{TaskID: taskID, Success: false}
+				}
+			}
+			return tui.AuthorizeResultMsg{TaskID: taskID, Success: true}
+		}
+	}
+
+	onReject := func(taskID string) tea.Cmd {
+		return func() tea.Msg {
+			q := findQueueForTask(queues, taskID)
+			if q != nil {
+				if err := q.RejectTask(taskID); err != nil {
+					return tui.RejectResultMsg{TaskID: taskID, Success: false}
+				}
+			}
+			return tui.RejectResultMsg{TaskID: taskID, Success: true}
+		}
+	}
+
+	// Create TUI model with persistence handlers
+	model := tui.NewModelWithOptions(pendingTasks, onAuthorize, onReject)
 
 	// Run TUI
 	p := tea.NewProgram(model, tea.WithAltScreen())
@@ -59,16 +84,18 @@ func runTasks(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func loadAllTasks(sessionsDir string) ([]*queue.Task, error) {
+// loadAllQueues loads all queue managers and their tasks
+func loadAllQueues(sessionsDir string) (map[string]*queue.Manager, []*queue.Task, error) {
+	queues := make(map[string]*queue.Manager)
 	var allTasks []*queue.Task
 
 	// Read all session directories
 	entries, err := os.ReadDir(sessionsDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return allTasks, nil
+			return queues, allTasks, nil
 		}
-		return nil, err
+		return nil, nil, err
 	}
 
 	for _, entry := range entries {
@@ -76,12 +103,33 @@ func loadAllTasks(sessionsDir string) ([]*queue.Task, error) {
 			sessionDir := filepath.Join(sessionsDir, entry.Name())
 			queueFile := filepath.Join(sessionDir, "queue.json")
 
-			// Load queue file
+			// Create queue manager
 			q := queue.NewQueue(queueFile, entry.Name())
 			tasks := q.GetAllTasks()
+
+			queues[entry.Name()] = q
 			allTasks = append(allTasks, tasks...)
 		}
 	}
 
-	return allTasks, nil
+	return queues, allTasks, nil
+}
+
+// findQueueForTask finds the queue manager that contains the given task
+func findQueueForTask(queues map[string]*queue.Manager, taskID string) *queue.Manager {
+	for _, q := range queues {
+		tasks := q.GetAllTasks()
+		for _, task := range tasks {
+			if task.ID == taskID {
+				return q
+			}
+		}
+	}
+	return nil
+}
+
+// loadAllTasks loads all tasks (deprecated, use loadAllQueues)
+func loadAllTasks(sessionsDir string) ([]*queue.Task, error) {
+	_, allTasks, err := loadAllQueues(sessionsDir)
+	return allTasks, err
 }

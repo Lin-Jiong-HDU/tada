@@ -114,11 +114,12 @@ func main() {
 
 	// For backward compatibility: if first arg is not a known command, treat as chat
 	// Check exact match for commands (no path separators) to avoid conflicts with files/directories
+	// Also exclude flags (starting with '-') to preserve help/flag behavior
 	if len(os.Args) > 1 {
 		arg := os.Args[1]
-		// Only treat as command if it's an exact match without path separators
+		// Only treat as command if it's an exact match without path separators and not a flag
 		if arg != "chat" && arg != "tasks" && arg != "help" &&
-			!containsPathSeparator(arg) {
+			!containsPathSeparator(arg) && !isFlag(arg) {
 			// Prepend "chat" to args for backward compatibility
 			args := append([]string{"chat"}, os.Args[1:]...)
 			rootCmd.SetArgs(args)
@@ -139,4 +140,9 @@ func containsPathSeparator(s string) bool {
 		}
 	}
 	return false
+}
+
+// isFlag checks if the string is a CLI flag (starts with -)
+func isFlag(s string) bool {
+	return len(s) > 0 && s[0] == '-'
 }
