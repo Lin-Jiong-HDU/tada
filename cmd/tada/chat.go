@@ -34,7 +34,15 @@ func getChatCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "chat",
 		Short: "与 AI 对话",
-		Long:  "交互式 AI 对话，支持多轮对话、历史记录和自定义 prompt",
+		Long: `交互式 AI 对话，支持多轮对话、历史记录和自定义 prompt
+
+特性:
+  - 多轮对话: 自动保存对话历史
+  - Prompt 模板: 支持 /prompt 命令切换
+  - 临时模式: 使用 --no-history 不保存历史
+  - 流式输出: 实时显示 AI 响应
+  - Markdown 渲染: 美化输出格式
+`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			_, err := storage.InitConfig()
 			return err
