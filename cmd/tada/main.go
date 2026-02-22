@@ -25,12 +25,13 @@ var rootCmd = &cobra.Command{
 	Long:  "tada - A terminal AI assistant that understands natural language and executes commands",
 }
 
-// chatCmd is the default chat command
-var chatCmd = &cobra.Command{
-	Use:   "chat [prompt]",
-	Short: "Chat with AI assistant",
-	Long:  "Chat with the AI assistant - understands natural language and executes commands",
+// quickCmd handles the single-shot command execution (backward compatibility)
+var quickCmd = &cobra.Command{
+	Use:   "quick [prompt]",
+	Short: "Quick command execution (deprecated - use bare argument instead)",
+	Long:  "Quick command execution - understands natural language and executes commands",
 	Args:  cobra.MinimumNArgs(1),
+	Hidden: true, // Hide from help, kept for backward compatibility
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		_, err := storage.InitConfig()
 		if err != nil {
@@ -95,12 +96,13 @@ var chatCmd = &cobra.Command{
 }
 
 func init() {
-	// Add subcommands
-	rootCmd.AddCommand(chatCmd)
+	// Add subcommands - use the new chat command from chat.go
+	rootCmd.AddCommand(getChatCommand())
 	rootCmd.AddCommand(getTasksCommand())
 	rootCmd.AddCommand(getRunCommand())
+	rootCmd.AddCommand(quickCmd) // Hidden command for backward compatibility
 
-	chatCmd.PersistentFlags().BoolVarP(&incognito, "incognito", "i", false, "Run in incognito mode (don't save history)")
+	quickCmd.PersistentFlags().BoolVarP(&incognito, "incognito", "i", false, "Run in incognito mode (don't save history)")
 }
 
 func main() {
