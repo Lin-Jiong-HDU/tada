@@ -377,14 +377,14 @@ func getStatusIndicator(status queue.TaskStatus) string {
 
 // Styles
 var (
-	titleStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
-	subtleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-	helpStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	titleStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
+	subtleStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	helpStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 	statusBarStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("252")).
-		Background(lipgloss.Color("235")).
-		Padding(0, 1).
-		Border(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("241")).
-		MarginTop(1)
+			Foreground(lipgloss.Color("252")).
+			Background(lipgloss.Color("235")).
+			Padding(0, 1).
+			Border(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("241")).
+			MarginTop(1)
 )
