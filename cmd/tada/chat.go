@@ -112,6 +112,13 @@ func runChat(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("对话不存在: %s", chatContinueID)
 		}
 		fmt.Printf("📂 恢复对话: %s (%s)\n", conv.ID, conv.PromptName)
+	} else if chatNoHistory {
+		// 使用临时对话，不保存历史
+		conv, err = manager.CreateEphemeral(chatName, chatPromptName)
+		if err != nil {
+			return fmt.Errorf("创建临时对话失败: %w", err)
+		}
+		fmt.Printf("📝 临时对话 (%s) - 不保存历史\n", conv.PromptName)
 	} else {
 		conv, err = manager.Create(chatName, chatPromptName)
 		if err != nil {
