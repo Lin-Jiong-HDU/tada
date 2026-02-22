@@ -24,6 +24,7 @@ type Conversation struct {
 	Status     ConversationStatus `json:"status"`
 	CreatedAt  time.Time          `json:"created_at"`
 	UpdatedAt  time.Time          `json:"updated_at"`
+	ephemeral  bool               `json:"-"` // 不保存到文件，不记录历史
 }
 
 // Message 表示单条消息
@@ -50,6 +51,16 @@ func NewConversation(promptName string) *Conversation {
 func (c *Conversation) AddMessage(msg Message) {
 	c.Messages = append(c.Messages, msg)
 	c.UpdatedAt = time.Now()
+}
+
+// IsEphemeral 返回对话是否为临时模式（不保存历史）
+func (c *Conversation) IsEphemeral() bool {
+	return c.ephemeral
+}
+
+// SetEphemeral 设置对话为临时模式
+func (c *Conversation) SetEphemeral(ephemeral bool) {
+	c.ephemeral = ephemeral
 }
 
 // ToAIFormat 转换为 AI 消息格式

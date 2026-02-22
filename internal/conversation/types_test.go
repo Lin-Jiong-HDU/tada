@@ -62,3 +62,30 @@ func TestMessage_ToAIFormat(t *testing.T) {
 		t.Errorf("Expected content 'test', got '%s'", aiMsg.Content)
 	}
 }
+
+func TestConversation_IsEphemeral(t *testing.T) {
+	conv := NewConversation("default")
+	conv.Name = "test"
+
+	// Default is not ephemeral
+	if conv.IsEphemeral() {
+		t.Error("Expected default conversation to not be ephemeral")
+	}
+
+	// Set as ephemeral
+	conv.SetEphemeral(true)
+	if !conv.IsEphemeral() {
+		t.Error("Expected conversation to be ephemeral after SetEphemeral(true)")
+	}
+
+	// Messages can still be added
+	conv.AddMessage(Message{
+		Role:      "user",
+		Content:   "test",
+		Timestamp: time.Now(),
+	})
+
+	if len(conv.Messages) != 1 {
+		t.Errorf("Expected 1 message, got %d", len(conv.Messages))
+	}
+}
