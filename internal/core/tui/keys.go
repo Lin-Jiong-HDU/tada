@@ -55,15 +55,17 @@ type helpWrapper struct {
 // String returns the full help text with descriptions
 func (h helpWrapper) String() string {
 	// Return descriptive help text for testing
-	return "[k:上移] [j:下移] [gg:顶部] [G:底部] [a:授权执行] [r:拒绝] [A:全部授权] [R:全部拒绝] [q:退出]"
+	return "↑/k:上 ↓/j:下 gg:首 G:尾 a:授权执行 r:拒绝 A:全部授权 R:全部拒绝 q:退出"
 }
 
 // View returns the help view with keys and actions
 func (h helpWrapper) View(subtle string) string {
-	// Compact format: [key:action]
+	// Compact format for status bar
 	helps := []string{
-		"k/j:移动",
-		"gg/G:首尾",
+		"↑/k:上",
+		"↓/j:下",
+		"gg:首",
+		"G:尾",
 		"a:执行",
 		"r:拒绝",
 		"A:全执行",
@@ -73,7 +75,7 @@ func (h helpWrapper) View(subtle string) string {
 
 	var s string
 	for _, h := range helps {
-		s += "[" + h + "] "
+		s += " " + h
 	}
 	return s
 }

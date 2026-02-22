@@ -223,48 +223,49 @@ func (m model) renderQueue() string {
 	// Header
 	s += titleStyle.Render(" tada 任务队列 ") + "\n\n"
 
+	// Content area
+	var content string
 	if len(m.tasks) == 0 {
-		s += subtleStyle.Render("没有待授权任务") + "\n"
-		return s
-	}
+		content = subtleStyle.Render("没有待授权任务")
+	} else {
+		// Group by session
+		grouped := m.groupTasksBySession()
 
-	// Group by session
-	grouped := m.groupTasksBySession()
+		for sessionID, tasks := range grouped {
+			content += fmt.Sprintf(" 会话: %s \n", sessionID)
 
-	for sessionID, tasks := range grouped {
-		s += fmt.Sprintf(" 会话: %s \n", sessionID)
+			for _, task := range tasks {
+				cursor := " "
+				if m.getCursorForTask(task.ID) == m.cursor {
+					cursor = ">"
+				}
 
-		for _, task := range tasks {
-			cursor := " "
-			if m.getCursorForTask(task.ID) == m.cursor {
-				cursor = ">"
+				// Status indicator
+				status := getStatusIndicator(task.Status)
+
+				// Command string
+				cmdStr := task.Command.Cmd
+				if len(task.Command.Args) > 0 {
+					cmdStr += " " + strings.Join(task.Command.Args, " ")
+				}
+
+				// Truncate if too long
+				if len(cmdStr) > 50 {
+					cmdStr = cmdStr[:47] + "..."
+				}
+
+				content += fmt.Sprintf("%s [%s] %s\n", cursor, status, cmdStr)
+
+				if task.CheckResult != nil && task.CheckResult.Warning != "" {
+					content += subtleStyle.Render("     警告: "+task.CheckResult.Warning) + "\n"
+				}
 			}
-
-			// Status indicator
-			status := getStatusIndicator(task.Status)
-
-			// Command string
-			cmdStr := task.Command.Cmd
-			if len(task.Command.Args) > 0 {
-				cmdStr += " " + strings.Join(task.Command.Args, " ")
-			}
-
-			// Truncate if too long
-			if len(cmdStr) > 50 {
-				cmdStr = cmdStr[:47] + "..."
-			}
-
-			s += fmt.Sprintf("%s [%s] %s\n", cursor, status, cmdStr)
-
-			if task.CheckResult != nil && task.CheckResult.Warning != "" {
-				s += subtleStyle.Render("     警告: "+task.CheckResult.Warning) + "\n"
-			}
+			content += "\n"
 		}
-		s += "\n"
 	}
 
-	// Footer
-	s += m.renderFooter()
+	// Combine content with footer
+	s += content + m.renderFooter()
 
 	return s
 }
@@ -276,7 +277,13 @@ func (m model) renderHelp() string {
 }
 
 func (m model) renderFooter() string {
-	return "\n" + m.keys.Help().View("")
+	// Get help text
+	helpText := m.keys.Help().View("")
+
+	// Style the help as a status bar with border
+	statusBar := statusBarStyle.Render(helpText)
+
+	return "\n" + statusBar + "\n"
 }
 
 func (m model) groupTasksBySession() map[string][]*queue.Task {
@@ -325,4 +332,11 @@ var (
 	titleStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Bold(true)
 	subtleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 	helpStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	statusBarStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("252")).
+		Background(lipgloss.Color("235")).
+		Padding(0, 1).
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("241")).
+		MarginTop(1)
 )
