@@ -8,9 +8,11 @@
 
 - 🗣️ Natural language interface - just tell it what you want
 - 🧠 AI-powered intent understanding
+- 💬 Interactive chat mode with conversation history
 - 💾 Session persistence with history
 - 🔒 Security controls - dangerous command detection and path access control
 - 🛡️ Configurable security levels (always/dangerous/never confirmation)
+- 📝 Custom prompt templates for different use cases
 
 ## Installation
 
@@ -76,6 +78,13 @@ tada includes built-in security controls to protect against dangerous AI-generat
 tada "list all files in the current directory"
 tada "create a new folder named docs"
 
+# Interactive chat mode
+tada chat                    # Start a new conversation
+tada chat --prompt coder      # Use a specific prompt template
+tada chat --continue <id>     # Resume a previous conversation
+tada chat --list              # List all conversations
+tada chat --show <id>         # Show conversation details
+
 # Async commands (queue for later execution)
 tada "create a new folder named tmp &"
 tada "download large file &"
@@ -89,6 +98,35 @@ tada run
 # Incognito mode (no history saved)
 tada -i "run a secret command"
 ```
+
+### Chat Mode
+
+Start an interactive conversation with AI:
+
+```bash
+# Start a new conversation
+tada chat
+
+# Use a specific prompt template
+tada chat --prompt coder
+
+# Resume a conversation
+tada chat --continue <conversation-id>
+
+# List all conversations
+tada chat --list
+```
+
+**Available Commands in Chat:**
+- `/help` - Show help
+- `/clear` - Clear screen
+- `/prompt <name>` - Switch prompt template
+- `/exit` or `/quit` - Exit and save
+
+**Available Prompt Templates:**
+- `default` - Friendly AI assistant
+- `coder` - Programming assistant
+- `expert` - Technical expert
 
 ### Async Execution
 
