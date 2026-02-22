@@ -90,6 +90,11 @@ func (m *Manager) List() ([]*Conversation, error) {
 	return m.storage.List()
 }
 
+// ListToday 列出今天的对话
+func (m *Manager) ListToday() ([]*Conversation, error) {
+	return m.storage.ListToday()
+}
+
 // Delete 删除对话
 func (m *Manager) Delete(id string) error {
 	return m.storage.Delete(id)

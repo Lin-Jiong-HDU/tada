@@ -178,13 +178,25 @@ func runREPLLoop(repl *terminal.REPL) error {
 }
 
 func runListConversations(manager *conversation.Manager) error {
-	convs, err := manager.List()
+	var convs []*conversation.Conversation
+	var err error
+
+	if chatToday {
+		convs, err = manager.ListToday()
+	} else {
+		convs, err = manager.List()
+	}
+
 	if err != nil {
 		return err
 	}
 
 	if len(convs) == 0 {
-		fmt.Println("💬 没有对话记录")
+		if chatToday {
+			fmt.Println("💬 今天没有对话记录")
+		} else {
+			fmt.Println("💬 没有对话记录")
+		}
 		return nil
 	}
 

@@ -98,3 +98,34 @@ func TestFileStorage_Delete(t *testing.T) {
 		t.Error("Expected error when getting deleted conversation")
 	}
 }
+
+func TestFileStorage_ListToday(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "storage-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	storage := NewFileStorage(tmpDir)
+
+	// Create a conversation for today
+	conv := NewConversation("default")
+	conv.Name = "today-test"
+	if err := storage.Save(conv); err != nil {
+		t.Fatal(err)
+	}
+
+	// List today's conversations
+	convs, err := storage.ListToday()
+	if err != nil {
+		t.Fatalf("ListToday failed: %v", err)
+	}
+
+	if len(convs) != 1 {
+		t.Errorf("Expected 1 conversation, got %d", len(convs))
+	}
+
+	if convs[0].ID != conv.ID {
+		t.Errorf("Expected conversation ID %s, got %s", conv.ID, convs[0].ID)
+	}
+}

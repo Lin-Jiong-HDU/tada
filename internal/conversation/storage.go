@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 )
 
 // Storage 对话存储接口
@@ -13,6 +14,7 @@ type Storage interface {
 	Save(conv *Conversation) error
 	Get(id string) (*Conversation, error)
 	List() ([]*Conversation, error)
+	ListToday() ([]*Conversation, error)
 	Delete(id string) error
 }
 
@@ -142,6 +144,42 @@ func (s *FileStorage) List() ([]*Conversation, error) {
 
 			conversations = append(conversations, conv)
 		}
+	}
+
+	// 按更新时间排序（最新的在前）
+	sort.Slice(conversations, func(i, j int) bool {
+		return conversations[i].UpdatedAt.After(conversations[j].UpdatedAt)
+	})
+
+	return conversations, nil
+}
+
+// ListToday 列出今天的对话
+func (s *FileStorage) ListToday() ([]*Conversation, error) {
+	var conversations []*Conversation
+
+	// 获取今天的日期路径
+	todayPath := filepath.Join(s.conversationsDir, time.Now().Format("20060102"))
+
+	entries, err := os.ReadDir(todayPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return conversations, nil // 今天还没有对话
+		}
+		return nil, fmt.Errorf("failed to read today's conversations directory: %w", err)
+	}
+
+	for _, convEntry := range entries {
+		if !convEntry.IsDir() {
+			continue
+		}
+
+		conv, err := s.Get(convEntry.Name())
+		if err != nil {
+			continue
+		}
+
+		conversations = append(conversations, conv)
 	}
 
 	// 按更新时间排序（最新的在前）
