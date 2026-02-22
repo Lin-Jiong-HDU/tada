@@ -91,3 +91,33 @@ func TestManager_Chat(t *testing.T) {
 		t.Logf("Messages: %d", len(loadedConv.Messages))
 	}
 }
+
+func TestManager_CreateEphemeral(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "conv-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	storage := NewFileStorage(tmpDir)
+	promptDir, _ := os.MkdirTemp("", "prompt-test-*")
+	loader := NewPromptLoader(promptDir)
+
+	manager := NewManager(storage, loader, &mockChatAIProvider{})
+
+	// Create ephemeral conversation
+	conv, err := manager.CreateEphemeral("test", "default")
+	if err != nil {
+		t.Fatalf("CreateEphemeral failed: %v", err)
+	}
+
+	if !conv.IsEphemeral() {
+		t.Error("Expected conversation to be ephemeral")
+	}
+
+	// Should not be saved to storage
+	_, err = storage.Get(conv.ID)
+	if err == nil {
+		t.Error("Expected ephemeral conversation to not be saved")
+	}
+}

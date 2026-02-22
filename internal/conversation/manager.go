@@ -55,6 +55,31 @@ func (m *Manager) Create(name, promptName string) (*Conversation, error) {
 	return conv, nil
 }
 
+// CreateEphemeral 创建临时对话（不保存历史）
+func (m *Manager) CreateEphemeral(name, promptName string) (*Conversation, error) {
+	conv := NewConversation(promptName)
+	conv.Name = name
+	conv.SetEphemeral(true) // 标记为临时对话
+
+	// 加载 prompt 模板
+	prompt, err := m.promptLoader.Load(promptName)
+	if err != nil {
+		log.Printf("Warning: failed to load prompt '%s': %v, using default", promptName, err)
+		conv.AddMessage(Message{
+			Role:    "system",
+			Content: "You are a helpful assistant.",
+		})
+	} else {
+		conv.AddMessage(Message{
+			Role:    "system",
+			Content: prompt.SystemPrompt,
+		})
+	}
+
+	// 不保存到存储
+	return conv, nil
+}
+
 // Get 获取对话
 func (m *Manager) Get(id string) (*Conversation, error) {
 	return m.storage.Get(id)
@@ -100,9 +125,11 @@ func (m *Manager) Chat(convID string, userInput string) (string, error) {
 	}
 	conv.AddMessage(assistantMsg)
 
-	// 保存
-	if err := m.storage.Save(conv); err != nil {
-		return "", fmt.Errorf("failed to save conversation: %w", err)
+	// 保存（临时对话不保存）
+	if !conv.IsEphemeral() {
+		if err := m.storage.Save(conv); err != nil {
+			return "", fmt.Errorf("failed to save conversation: %w", err)
+		}
 	}
 
 	return response, nil
@@ -175,8 +202,10 @@ func (m *Manager) ChatStream(convID string, userInput string) (<-chan string, er
 		}
 		reloadedConv.AddMessage(assistantMsg)
 
-		// 保存
-		_ = m.storage.Save(reloadedConv) // 保存失败时至少已发送到 channel
+		// 保存（临时对话不保存）
+		if !reloadedConv.IsEphemeral() {
+			_ = m.storage.Save(reloadedConv) // 保存失败时至少已发送到 channel
+		}
 	}()
 
 	return out, nil
