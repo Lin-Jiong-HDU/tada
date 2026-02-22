@@ -31,7 +31,7 @@ func TestGetChatCommand_HasRequiredFlags(t *testing.T) {
 
 	// Check for flags that should exist
 	requiredFlags := map[string]string{
-		"prompt":  "p",
+		"prompt":   "p",
 		"continue": "c",
 		"list":     "l",
 		"show":     "s",

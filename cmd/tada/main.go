@@ -27,10 +27,10 @@ var rootCmd = &cobra.Command{
 
 // quickCmd handles the single-shot command execution (backward compatibility)
 var quickCmd = &cobra.Command{
-	Use:   "quick [prompt]",
-	Short: "Quick command execution (deprecated - use bare argument instead)",
-	Long:  "Quick command execution - understands natural language and executes commands",
-	Args:  cobra.MinimumNArgs(1),
+	Use:    "quick [prompt]",
+	Short:  "Quick command execution (deprecated - use bare argument instead)",
+	Long:   "Quick command execution - understands natural language and executes commands",
+	Args:   cobra.MinimumNArgs(1),
 	Hidden: true, // Hide from help, kept for backward compatibility
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		_, err := storage.InitConfig()

@@ -3,8 +3,8 @@ package conversation
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
+	"github.com/google/uuid"
 )
 
 // ConversationStatus 对话状态
@@ -17,13 +17,13 @@ const (
 
 // Conversation 表示一个对话
 type Conversation struct {
-	ID         string               `json:"id"`
-	Name       string               `json:"name"`
-	PromptName string               `json:"prompt_name"`
-	Messages   []Message            `json:"messages"`
-	Status     ConversationStatus   `json:"status"`
-	CreatedAt  time.Time            `json:"created_at"`
-	UpdatedAt  time.Time            `json:"updated_at"`
+	ID         string             `json:"id"`
+	Name       string             `json:"name"`
+	PromptName string             `json:"prompt_name"`
+	Messages   []Message          `json:"messages"`
+	Status     ConversationStatus `json:"status"`
+	CreatedAt  time.Time          `json:"created_at"`
+	UpdatedAt  time.Time          `json:"updated_at"`
 }
 
 // Message 表示单条消息

@@ -17,16 +17,16 @@ import (
 )
 
 var (
-	chatPromptName  string
-	chatContinueID  string
-	chatList        bool
-	chatToday       bool
-	chatShowID      string
-	chatDeleteID    string
-	chatName        string
-	chatNoHistory   bool
-	chatNoStream    bool
-	chatNoRender    bool
+	chatPromptName string
+	chatContinueID string
+	chatList       bool
+	chatToday      bool
+	chatShowID     string
+	chatDeleteID   string
+	chatName       string
+	chatNoHistory  bool
+	chatNoStream   bool
+	chatNoRender   bool
 )
 
 func getChatCommand() *cobra.Command {

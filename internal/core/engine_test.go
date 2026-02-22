@@ -29,6 +29,15 @@ func (m *mockAIProvider) Chat(ctx context.Context, messages []ai.Message) (strin
 	return "response", nil
 }
 
+func (m *mockAIProvider) ChatStream(ctx context.Context, messages []ai.Message) (<-chan string, error) {
+	ch := make(chan string)
+	go func() {
+		defer close(ch)
+		ch <- "stream"
+	}()
+	return ch, nil
+}
+
 func TestEngine_SetQueue(t *testing.T) {
 	// Create temporary session
 	tmpDir, _ := os.MkdirTemp("", "tada-engine-test-*")
