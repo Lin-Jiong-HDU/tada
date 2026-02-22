@@ -178,17 +178,19 @@ func (m *Manager) Chat(convID string, userInput string) (string, error) {
 // 1. 添加用户消息到对话
 // 2. 调用 AI 提供者的流式接口
 // 3. 在独立 goroutine 中：
-//    - 逐块发送响应到输出 channel
-//    - 完成后重新加载对话（避免竞态条件）
-//    - 添加助手消息并保存
+//   - 逐块发送响应到输出 channel
+//   - 完成后重新加载对话（避免竞态条件）
+//   - 添加助手消息并保存
 //
 // 参数：
-//   convID - 对话 ID
-//   userInput - 用户输入内容
+//
+//	convID - 对话 ID
+//	userInput - 用户输入内容
 //
 // 返回：
-//   <-chan string - 响应内容流，消费完后 channel 自动关闭
-//   error - 错误信息（nil 表示成功）
+//
+//	<-chan string - 响应内容流，消费完后 channel 自动关闭
+//	error - 错误信息（nil 表示成功）
 func (m *Manager) ChatStream(convID string, userInput string) (<-chan string, error) {
 	conv, err := m.Get(convID)
 	if err != nil {
