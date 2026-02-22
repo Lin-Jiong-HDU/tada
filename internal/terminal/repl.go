@@ -1,11 +1,15 @@
 package terminal
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/conversation"
 )
+
+// ErrUserExit 表示用户请求退出
+var ErrUserExit = errors.New("user requested exit")
 
 // REPL 交互式对话
 type REPL struct {
@@ -42,7 +46,7 @@ func (r *REPL) ProcessInput(input string) error {
 			return err
 		}
 		if shouldExit {
-			return fmt.Errorf("exit")
+			return ErrUserExit
 		}
 		return nil
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -159,7 +160,7 @@ func runREPLLoop(repl *terminal.REPL) error {
 		err = repl.ProcessInput(input)
 		if err != nil {
 			// 检查是否是退出信号
-			if err.Error() == "exit" {
+			if errors.Is(err, terminal.ErrUserExit) {
 				return nil
 			}
 			fmt.Fprintf(os.Stderr, "错误: %v\n", err)

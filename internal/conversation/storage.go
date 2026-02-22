@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 // Storage 对话存储接口
@@ -143,14 +144,10 @@ func (s *FileStorage) List() ([]*Conversation, error) {
 		}
 	}
 
-	// 按更新时间排序
-	for i := 0; i < len(conversations); i++ {
-		for j := i + 1; j < len(conversations); j++ {
-			if conversations[i].UpdatedAt.Before(conversations[j].UpdatedAt) {
-				conversations[i], conversations[j] = conversations[j], conversations[i]
-			}
-		}
-	}
+	// 按更新时间排序（最新的在前）
+	sort.Slice(conversations, func(i, j int) bool {
+		return conversations[i].UpdatedAt.After(conversations[j].UpdatedAt)
+	})
 
 	return conversations, nil
 }

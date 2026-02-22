@@ -130,6 +130,8 @@ func (m *Manager) ChatStream(convID string, userInput string) (<-chan string, er
 
 	// 创建输出 channel
 	out := make(chan string)
+	// 使用局部变量避免在 goroutine 中引用可能变化的变量
+	id := conv.ID
 
 	go func() {
 		defer close(out)
@@ -141,16 +143,22 @@ func (m *Manager) ChatStream(convID string, userInput string) (<-chan string, er
 			out <- chunk
 		}
 
+		// 重新加载对话以避免竞态条件
+		reloadedConv, err := m.Get(id)
+		if err != nil {
+			return // 对话不存在，无法保存
+		}
+
 		// 添加助手回复
 		assistantMsg := Message{
 			Role:      "assistant",
 			Content:   fullResponse.String(),
 			Timestamp: time.Now(),
 		}
-		conv.AddMessage(assistantMsg)
+		reloadedConv.AddMessage(assistantMsg)
 
 		// 保存
-		m.storage.Save(conv)
+		_ = m.storage.Save(reloadedConv) // 保存失败时至少已发送到 channel
 	}()
 
 	return out, nil
