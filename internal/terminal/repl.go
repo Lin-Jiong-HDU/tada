@@ -90,7 +90,7 @@ func (r *REPL) processStreamChat(input string) error {
 
 	var fullResponse strings.Builder
 	for chunk := range stream {
-		fmt.Print(chunk)              // 实时显示原文（流式效果）
+		fmt.Print(chunk)                // 实时显示原文（流式效果）
 		fullResponse.WriteString(chunk) // 同时存储用于渲染
 	}
 

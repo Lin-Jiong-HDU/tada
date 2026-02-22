@@ -116,7 +116,7 @@ func (c *Client) callAPI(ctx context.Context, messages []ai.Message) (string, er
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 300 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("request failed: %w", err)
@@ -209,7 +209,7 @@ func (c *Client) ChatStream(ctx context.Context, messages []ai.Message) (<-chan 
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
 
 	// 流式请求使用较长的超时时间（60秒），因为没有设置超时的 HTTP 客户端可能导致无限等待
-	client := &http.Client{Timeout: 60 * time.Second}
+	client := &http.Client{Timeout: 300 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
