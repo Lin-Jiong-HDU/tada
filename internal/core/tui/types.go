@@ -25,6 +25,11 @@ type TasksLoadedMsg struct {
 	Tasks []*queue.Task
 }
 
+// StatusCheckMsg is sent to check task status updates
+type StatusCheckMsg struct {
+	TaskID string
+}
+
 // Model is the interface for the TUI model
 type Model interface {
 	Init() tea.Cmd

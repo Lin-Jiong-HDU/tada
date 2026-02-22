@@ -114,8 +114,9 @@ func TestModel_Update_AuthorizeKey(t *testing.T) {
 	newModel2, _ := newModel.(model).Update(resultMsg)
 	m2 := newModel2.(model)
 
-	if m2.tasks[0].Status != queue.TaskStatusApproved {
-		t.Errorf("Expected status approved, got %s", m2.tasks[0].Status)
+	// Tasks execute immediately on approval, so status should be executing
+	if m2.tasks[0].Status != queue.TaskStatusExecuting {
+		t.Errorf("Expected status executing, got %s", m2.tasks[0].Status)
 	}
 }
 

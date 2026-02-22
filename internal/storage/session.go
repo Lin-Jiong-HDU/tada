@@ -12,7 +12,6 @@ import (
 
 const (
 	SessionDirName = "sessions"
-	CurrentSession = "current.json"
 	MaxHistory     = 100
 )
 
@@ -28,28 +27,6 @@ var currentSession *Session
 
 // InitSession initializes or loads the current session
 func InitSession() (*Session, error) {
-	configDir, err := GetConfigDir()
-	if err != nil {
-		return nil, err
-	}
-
-	sessionDir := filepath.Join(configDir, SessionDirName)
-	if err := os.MkdirAll(sessionDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create session directory: %w", err)
-	}
-
-	sessionPath := filepath.Join(sessionDir, CurrentSession)
-
-	// Try to load existing session
-	if data, err := os.ReadFile(sessionPath); err == nil {
-		var session Session
-		if err := json.Unmarshal(data, &session); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal session: %w", err)
-		}
-		currentSession = &session
-		return currentSession, nil
-	}
-
 	// Create new session
 	session := Session{
 		ID:        generateSessionID(),
@@ -73,12 +50,12 @@ func SaveSession() error {
 		return nil
 	}
 
-	configDir, err := GetConfigDir()
+	sessionDir, err := getSessionDir(currentSession.ID)
 	if err != nil {
 		return err
 	}
 
-	sessionPath := filepath.Join(configDir, SessionDirName, CurrentSession)
+	sessionPath := filepath.Join(sessionDir, "session.json")
 
 	currentSession.UpdatedAt = time.Now()
 
@@ -120,12 +97,12 @@ func ClearSession() error {
 		return nil
 	}
 
-	configDir, err := GetConfigDir()
+	sessionDir, err := getSessionDir(currentSession.ID)
 	if err != nil {
 		return err
 	}
 
-	sessionPath := filepath.Join(configDir, SessionDirName, CurrentSession)
+	sessionPath := filepath.Join(sessionDir, "session.json")
 
 	if err := os.Remove(sessionPath); err != nil && !os.IsNotExist(err) {
 		return err
@@ -136,5 +113,25 @@ func ClearSession() error {
 }
 
 func generateSessionID() string {
-	return fmt.Sprintf("session-%d", time.Now().Unix())
+	now := time.Now()
+	return fmt.Sprintf("%d-%02d-%02d-%02d%02d%02d-%09d",
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		now.Hour(),
+		now.Minute(),
+		now.Second(),
+		now.Nanosecond())
+}
+
+func getSessionDir(sessionID string) (string, error) {
+	configDir, err := GetConfigDir()
+	if err != nil {
+		return "", err
+	}
+	sessionDir := filepath.Join(configDir, SessionDirName, sessionID)
+	if err := os.MkdirAll(sessionDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create session directory: %w", err)
+	}
+	return sessionDir, nil
 }

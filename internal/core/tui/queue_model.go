@@ -3,30 +3,35 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/core/queue"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
+// TaskReloadFunc is a callback to reload a task from the queue
+type TaskReloadFunc func(taskID string) *queue.Task
+
 // model is the Bubble Tea model for the queue TUI
 type model struct {
-	tasks       []*queue.Task
-	cursor      int
-	selected    map[string]struct{}
-	keys        keyMap
-	showingHelp bool
-	onAuthorize func(string) tea.Cmd
-	onReject    func(string) tea.Cmd
+	tasks          []*queue.Task
+	cursor         int
+	selected       map[string]struct{}
+	keys           keyMap
+	showingHelp    bool
+	onAuthorize    func(string) tea.Cmd
+	onReject       func(string) tea.Cmd
+	taskReloadFunc TaskReloadFunc
 }
 
 // NewModel creates a new queue UI model
 func NewModel(tasks []*queue.Task) Model {
-	return NewModelWithOptions(tasks, nil, nil)
+	return NewModelWithOptions(tasks, nil, nil, nil)
 }
 
 // NewModelWithOptions creates a new queue UI model with custom authorize/reject handlers
-func NewModelWithOptions(tasks []*queue.Task, onAuthorize, onReject func(string) tea.Cmd) Model {
+func NewModelWithOptions(tasks []*queue.Task, onAuthorize, onReject func(string) tea.Cmd, taskReloadFunc TaskReloadFunc) Model {
 	if onAuthorize == nil {
 		onAuthorize = defaultAuthorizeHandler
 	}
@@ -35,13 +40,14 @@ func NewModelWithOptions(tasks []*queue.Task, onAuthorize, onReject func(string)
 	}
 
 	return model{
-		tasks:       tasks,
-		cursor:      0,
-		selected:    make(map[string]struct{}),
-		keys:        defaultKeyMap(),
-		showingHelp: false,
-		onAuthorize: onAuthorize,
-		onReject:    onReject,
+		tasks:          tasks,
+		cursor:         0,
+		selected:       make(map[string]struct{}),
+		keys:           defaultKeyMap(),
+		showingHelp:    false,
+		onAuthorize:    onAuthorize,
+		onReject:       onReject,
+		taskReloadFunc: taskReloadFunc,
 	}
 }
 
@@ -70,11 +76,39 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case AuthorizeResultMsg:
 		if msg.Success {
-			// Update task status
+			// Update task status to executing (will be updated by background executor)
 			for i, task := range m.tasks {
 				if task.ID == msg.TaskID {
-					m.tasks[i].Status = queue.TaskStatusApproved
-					break
+					// Create a copy with updated status
+					updatedTask := *task
+					updatedTask.Status = queue.TaskStatusExecuting
+					m.tasks[i] = &updatedTask
+
+					// Start a ticker to check for status updates
+					return m, tea.Tick(time.Second*2, func(t time.Time) tea.Msg {
+						return StatusCheckMsg{TaskID: msg.TaskID}
+					})
+				}
+			}
+		}
+		return m, nil
+
+	case StatusCheckMsg:
+		// Reload task from queue to get fresh status
+		if m.taskReloadFunc != nil {
+			if freshTask := m.taskReloadFunc(msg.TaskID); freshTask != nil {
+				// Update the task in our list with fresh data
+				for i, task := range m.tasks {
+					if task.ID == msg.TaskID {
+						m.tasks[i] = freshTask
+						// If still executing, schedule another check
+						if freshTask.Status == queue.TaskStatusExecuting {
+							return m, tea.Tick(time.Second*2, func(t time.Time) tea.Msg {
+								return StatusCheckMsg{TaskID: msg.TaskID}
+							})
+						}
+						break
+					}
 				}
 			}
 		}
@@ -230,8 +264,8 @@ func (m model) groupTasksBySession() map[string][]*queue.Task {
 	grouped := make(map[string][]*queue.Task)
 
 	for _, task := range m.tasks {
-		// Only show pending tasks
-		if task.Status == queue.TaskStatusPending {
+		// Show pending and executing tasks
+		if task.Status == queue.TaskStatusPending || task.Status == queue.TaskStatusExecuting {
 			grouped[task.SessionID] = append(grouped[task.SessionID], task)
 		}
 	}
