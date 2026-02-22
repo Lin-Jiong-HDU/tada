@@ -205,6 +205,13 @@ func (m *Manager) ChatStream(convID string, userInput string) (<-chan string, er
 	}
 	conv.AddMessage(userMsg)
 
+	// 先保存用户消息（确保后续重新加载时能获取到）
+	if !conv.IsEphemeral() {
+		if err := m.storage.Save(conv); err != nil {
+			return nil, fmt.Errorf("failed to save user message: %w", err)
+		}
+	}
+
 	// 调用 AI 流式接口
 	messages := conv.GetMessagesForAI()
 	stream, err := m.aiProvider.ChatStream(context.Background(), messages)
