@@ -21,6 +21,7 @@ var config *Config
 type Config struct {
 	AI       AIConfig                `mapstructure:"ai"`
 	Security security.SecurityPolicy `mapstructure:"security"`
+	Chat     ChatConfig              `mapstructure:"chat"`
 }
 
 // AIConfig holds AI-related configuration
@@ -31,6 +32,26 @@ type AIConfig struct {
 	BaseURL   string `mapstructure:"base_url"`
 	Timeout   int    `mapstructure:"timeout"`
 	MaxTokens int    `mapstructure:"max_tokens"`
+}
+
+// ChatConfig holds chat-related configuration
+type ChatConfig struct {
+	DefaultPrompt  string `mapstructure:"default_prompt"`
+	MaxHistory     int    `mapstructure:"max_history"`
+	AutoSave       bool   `mapstructure:"auto_save"`
+	Stream         bool   `mapstructure:"stream"`
+	RenderMarkdown bool   `mapstructure:"render_markdown"`
+}
+
+// DefaultChatConfig returns default chat configuration
+func DefaultChatConfig() ChatConfig {
+	return ChatConfig{
+		DefaultPrompt:  "default",
+		MaxHistory:     100,
+		AutoSave:       true,
+		Stream:         true,
+		RenderMarkdown: true,
+	}
 }
 
 // GetConfigDir returns the tada config directory path
@@ -72,6 +93,13 @@ func InitConfig() (*Config, error) {
 	v.SetDefault("security.allow_terminal_takeover", true)
 	v.SetDefault("security.restricted_paths", []string{})
 	v.SetDefault("security.readonly_paths", []string{})
+
+	// Chat defaults
+	v.SetDefault("chat.default_prompt", "default")
+	v.SetDefault("chat.max_history", 100)
+	v.SetDefault("chat.auto_save", true)
+	v.SetDefault("chat.stream", true)
+	v.SetDefault("chat.render_markdown", true)
 
 	// Read config file (ignore if not exists)
 	if err := v.ReadInConfig(); err != nil {
