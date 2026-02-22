@@ -97,6 +97,72 @@ tada tasks
 tada run
 ```
 
+## Chat Mode
+
+For interactive conversations with AI, use chat mode:
+
+```bash
+# Start a new conversation
+tada chat
+
+# Use a specific prompt template
+tada chat --prompt coder
+
+# Resume a previous conversation
+tada chat --continue <conversation-id>
+
+# List all conversations
+tada chat --list
+
+# Show conversation details
+tada chat --show <conversation-id>
+
+# Delete a conversation
+tada chat --delete <conversation-id>
+```
+
+### Chat Commands
+
+While in chat mode, you can use these commands:
+
+- `/help` - Show available commands
+- `/clear` - Clear the screen
+- `/prompt <name>` - Switch to a different prompt template
+- `/exit` or `/quit` - Exit and save the conversation
+
+### Prompt Templates
+
+tada comes with built-in prompt templates:
+
+- `default` - Friendly AI assistant for general questions
+- `coder` - Programming assistant with code examples
+- `expert` - Technical expert for deep analysis
+
+You can create custom prompts by adding markdown files to `~/.tada/prompts/`:
+
+```markdown
+---
+name: "my-prompt"
+title: "My Custom Prompt"
+description: "A custom assistant"
+---
+
+You are a specialized assistant for...
+```
+
+### Chat Configuration
+
+Add chat settings to your `~/.tada/config.yaml`:
+
+```yaml
+chat:
+  default_prompt: "default"      # Default prompt template
+  max_history: 100               # Maximum messages per conversation
+  auto_save: true                # Automatically save conversations
+  stream: true                   # Enable streaming responses
+  render_markdown: true          # Render markdown output
+```
+
 ## Security Configuration
 
 tada includes security controls to protect against dangerous AI-generated commands.
@@ -159,21 +225,25 @@ tada/
 ├── internal/
 │   ├── ai/
 │   │   ├── provider.go      # AI types and interfaces
-│   │   └── openai/
-│   │       ├── client.go    # OpenAI implementation
-│   │       └── client_test.go
+│   │   ├── openai/          # OpenAI implementation
+│   │   └── glm/             # GLM implementation
 │   ├── core/
 │   │   ├── engine.go        # Main orchestration
 │   │   ├── executor.go      # Command execution
-│   │   └── executor_test.go
+│   │   └── queue/           # Task queue management
+│   ├── conversation/        # Chat conversation features
+│   │   ├── types.go         # Conversation types
+│   │   ├── storage.go       # Conversation persistence
+│   │   ├── manager.go       # Conversation manager
+│   │   ├── prompt.go        # Prompt template loader
+│   │   └── renderer.go      # Markdown renderer
+│   ├── terminal/
+│   │   └── repl.go          # Interactive REPL
 │   └── storage/
 │       ├── config.go        # Configuration management
-│       ├── config_test.go
-│       ├── session.go       # Session persistence
-│       └── session_test.go
+│       └── session.go       # Session persistence
 ├── tests/
-│   └── e2e/
-│       └── mvp_test.go      # End-to-end tests
+│   └── integration/         # Integration tests
 └── docs/
     ├── plans/
     │   └── 2025-02-18-tada-mvp.md

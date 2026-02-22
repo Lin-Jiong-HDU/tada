@@ -1,0 +1,100 @@
+package conversation
+
+import (
+	"time"
+
+	"github.com/Lin-Jiong-HDU/tada/internal/ai"
+	"github.com/google/uuid"
+)
+
+// ConversationStatus 对话状态
+type ConversationStatus string
+
+const (
+	StatusActive   ConversationStatus = "active"
+	StatusArchived ConversationStatus = "archived"
+)
+
+// Conversation 表示一个对话
+type Conversation struct {
+	ID         string             `json:"id"`
+	Name       string             `json:"name"`
+	PromptName string             `json:"prompt_name"`
+	Messages   []Message          `json:"messages"`
+	Status     ConversationStatus `json:"status"`
+	CreatedAt  time.Time          `json:"created_at"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	ephemeral  bool               `json:"-"` // 不保存到文件，不记录历史
+}
+
+// Message 表示单条消息
+type Message struct {
+	Role      string    `json:"role"`
+	Content   string    `json:"content"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+// NewConversation 创建新对话
+func NewConversation(promptName string) *Conversation {
+	now := time.Now()
+	return &Conversation{
+		ID:         uuid.New().String(),
+		PromptName: promptName,
+		Messages:   []Message{},
+		Status:     StatusActive,
+		CreatedAt:  now,
+		UpdatedAt:  now,
+	}
+}
+
+// AddMessage 添加消息
+func (c *Conversation) AddMessage(msg Message) {
+	c.Messages = append(c.Messages, msg)
+	c.UpdatedAt = time.Now()
+}
+
+// IsEphemeral 返回对话是否为临时模式（不保存历史）
+func (c *Conversation) IsEphemeral() bool {
+	return c.ephemeral
+}
+
+// SetEphemeral 设置对话为临时模式
+func (c *Conversation) SetEphemeral(ephemeral bool) {
+	c.ephemeral = ephemeral
+}
+
+// SwitchPrompt 切换对话的 prompt 模板
+// 替换系统消息为新的 prompt，保留用户和助手的对话历史
+func (c *Conversation) SwitchPrompt(newPromptName string, newSystemPrompt string) {
+	// 移除旧的系统消息（第一条消息）
+	if len(c.Messages) > 0 && c.Messages[0].Role == "system" {
+		c.Messages = c.Messages[1:]
+	}
+
+	// 在开头插入新的系统消息
+	c.PromptName = newPromptName
+	systemMsg := Message{
+		Role:      "system",
+		Content:   newSystemPrompt,
+		Timestamp: time.Now(),
+	}
+	c.Messages = append([]Message{systemMsg}, c.Messages...)
+	c.UpdatedAt = time.Now()
+}
+
+// ToAIFormat 转换为 AI 消息格式
+func (m *Message) ToAIFormat() ai.Message {
+	return ai.Message{
+		Role:    m.Role,
+		Content: m.Content,
+	}
+}
+
+// GetMessagesForAI 获取用于 AI 的消息列表
+func (c *Conversation) GetMessagesForAI() []ai.Message {
+	messages := make([]ai.Message, 0, len(c.Messages))
+	for _, msg := range c.Messages {
+		messages = append(messages, msg.ToAIFormat())
+	}
+	return messages
+}

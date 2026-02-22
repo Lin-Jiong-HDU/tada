@@ -1,7 +1,9 @@
 package glm
 
 import (
+	"context"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
@@ -115,4 +117,35 @@ func TestAI_Types(t *testing.T) {
 	if len(intent.Commands) != 1 {
 		t.Errorf("Expected 1 command, got %d", len(intent.Commands))
 	}
+}
+
+func TestIntegration_ChatStream(t *testing.T) {
+	if os.Getenv("TADA_INTEGRATION_TEST") == "" {
+		t.Skip("Set TADA_INTEGRATION_TEST=1 to run integration tests")
+	}
+
+	apiKey := os.Getenv("GLM_API_KEY")
+	if apiKey == "" {
+		t.Skip("GLM_API_KEY not set")
+	}
+
+	client := NewClient(apiKey, "glm-5", "")
+
+	stream, err := client.ChatStream(context.Background(), []ai.Message{
+		{Role: "user", Content: "Say 'Hello World'"},
+	})
+	if err != nil {
+		t.Fatalf("ChatStream failed: %v", err)
+	}
+
+	var response strings.Builder
+	for chunk := range stream {
+		response.WriteString(chunk)
+	}
+
+	if response.String() == "" {
+		t.Error("Expected non-empty response")
+	}
+
+	t.Logf("Response: %s", response.String())
 }

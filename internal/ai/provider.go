@@ -27,4 +27,7 @@ type AIProvider interface {
 	ParseIntent(ctx context.Context, input string, systemPrompt string) (*Intent, error)
 	AnalyzeOutput(ctx context.Context, cmd string, output string) (string, error)
 	Chat(ctx context.Context, messages []Message) (string, error)
+
+	// ChatStream 流式对话
+	ChatStream(ctx context.Context, messages []Message) (<-chan string, error)
 }

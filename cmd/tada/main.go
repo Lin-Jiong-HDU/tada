@@ -25,12 +25,13 @@ var rootCmd = &cobra.Command{
 	Long:  "tada - A terminal AI assistant that understands natural language and executes commands",
 }
 
-// chatCmd is the default chat command
-var chatCmd = &cobra.Command{
-	Use:   "chat [prompt]",
-	Short: "Chat with AI assistant",
-	Long:  "Chat with the AI assistant - understands natural language and executes commands",
-	Args:  cobra.MinimumNArgs(1),
+// quickCmd handles the single-shot command execution (backward compatibility)
+var quickCmd = &cobra.Command{
+	Use:    "quick [prompt]",
+	Short:  "Quick command execution (deprecated - use bare argument instead)",
+	Long:   "Quick command execution - understands natural language and executes commands",
+	Args:   cobra.MinimumNArgs(1),
+	Hidden: true, // Hide from help, kept for backward compatibility
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		_, err := storage.InitConfig()
 		if err != nil {
@@ -95,12 +96,13 @@ var chatCmd = &cobra.Command{
 }
 
 func init() {
-	// Add subcommands
-	rootCmd.AddCommand(chatCmd)
+	// Add subcommands - use the new chat command from chat.go
+	rootCmd.AddCommand(getChatCommand())
 	rootCmd.AddCommand(getTasksCommand())
 	rootCmd.AddCommand(getRunCommand())
+	rootCmd.AddCommand(quickCmd) // Hidden command for backward compatibility
 
-	chatCmd.PersistentFlags().BoolVarP(&incognito, "incognito", "i", false, "Run in incognito mode (don't save history)")
+	quickCmd.PersistentFlags().BoolVarP(&incognito, "incognito", "i", false, "Run in incognito mode (don't save history)")
 }
 
 func main() {
@@ -113,7 +115,7 @@ func main() {
 		return
 	}
 
-	// For backward compatibility: if first arg is not a known command, treat as chat
+	// For backward compatibility: if first arg is not a known command, execute as single-shot command
 	// Check exact match for commands (no path separators) to avoid conflicts with files/directories
 	// Also exclude flags (starting with '-') to preserve help/flag behavior
 	if len(os.Args) > 1 {
@@ -121,8 +123,8 @@ func main() {
 		// Only treat as command if it's an exact match without path separators and not a flag
 		if arg != "chat" && arg != "tasks" && arg != "run" && arg != "help" &&
 			!containsPathSeparator(arg) && !isFlag(arg) {
-			// Prepend "chat" to args for backward compatibility
-			args := append([]string{"chat"}, os.Args[1:]...)
+			// Use quick command for single-shot command execution
+			args := append([]string{"quick"}, os.Args[1:]...)
 			rootCmd.SetArgs(args)
 		}
 	}
