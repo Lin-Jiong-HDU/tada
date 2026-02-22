@@ -82,7 +82,7 @@ func TestEngine_Process_AsyncCommandGoesToQueue(t *testing.T) {
 }
 
 func TestEngine_ParseAsyncSyntax(t *testing.T) {
-	executor := NewExecutor(5)
+	executor := NewExecutor(5 * time.Second)
 	policy := security.DefaultPolicy()
 	_ = NewEngine(&mockAIProvider{}, executor, policy)
 
@@ -154,7 +154,7 @@ func TestEngine_Process_SetsIsAsyncFlag(t *testing.T) {
 		NeedsConfirm: false,
 	}
 
-	executor := NewExecutor(5)
+	executor := NewExecutor(5 * time.Second)
 	policy := security.DefaultPolicy()
 	_ = NewEngine(&mockAIProvider{intent: intent}, executor, policy)
 
@@ -186,7 +186,7 @@ func TestEngine_AsyncQueuesWithoutConfirmation(t *testing.T) {
 		NeedsConfirm: false,
 	}
 
-	executor := NewExecutor(5)
+	executor := NewExecutor(5 * time.Second)
 	policy := security.DefaultPolicy()
 	policy.CommandLevel = security.ConfirmAlways // Require confirmation for all
 	engine := NewEngine(&mockAIProvider{intent: intent}, executor, policy)

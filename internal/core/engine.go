@@ -55,6 +55,10 @@ func (e *Engine) Process(ctx context.Context, input string, systemPrompt string)
 	isAsync := ParseAsyncSyntax(input)
 	if isAsync {
 		input = StripAsyncSyntax(input)
+		// Validate that we have an actual command
+		if input == "" {
+			return fmt.Errorf("async marker '&' requires a command")
+		}
 	}
 
 	// Add user message to session (use original input for history)

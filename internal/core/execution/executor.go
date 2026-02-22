@@ -58,8 +58,23 @@ func (e *TaskExecutor) ExecuteTask(ctx context.Context, taskID string) error {
 		Output:   result.Output,
 	}
 
+	// Check for errors from the result (Execute always returns nil for err)
+	if result.Error != nil {
+		queueResult.Error = result.Error.Error()
+	}
+
+	// If Execute returned an error (shouldn't happen but handle defensively), incorporate it
 	if err != nil {
-		queueResult.Error = err.Error()
+		if queueResult.Error == "" {
+			queueResult.Error = err.Error()
+		} else {
+			queueResult.Error = fmt.Sprintf("%s: %v", queueResult.Error, err)
+		}
+	}
+
+	// Ensure a non-zero exit code when an error is present
+	if queueResult.Error != "" && queueResult.ExitCode == 0 {
+		queueResult.ExitCode = 1
 	}
 
 	// Set result (will transition to completed/failed)

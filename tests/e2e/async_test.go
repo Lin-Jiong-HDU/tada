@@ -169,14 +169,29 @@ func TestAsync_MultiTaskExecution(t *testing.T) {
 	cmd2 := ai.Command{Cmd: "echo", Args: []string{"two"}}
 	cmd3 := ai.Command{Cmd: "echo", Args: []string{"three"}}
 
-	task1, _ := q.AddTask(cmd1, check)
-	task2, _ := q.AddTask(cmd2, check)
-	task3, _ := q.AddTask(cmd3, check)
+	task1, err := q.AddTask(cmd1, check)
+	if err != nil {
+		t.Fatalf("failed to add task1: %v", err)
+	}
+	task2, err := q.AddTask(cmd2, check)
+	if err != nil {
+		t.Fatalf("failed to add task2: %v", err)
+	}
+	task3, err := q.AddTask(cmd3, check)
+	if err != nil {
+		t.Fatalf("failed to add task3: %v", err)
+	}
 
 	// Approve all
-	q.ApproveTask(task1.ID)
-	q.ApproveTask(task2.ID)
-	q.ApproveTask(task3.ID)
+	if err := q.ApproveTask(task1.ID); err != nil {
+		t.Fatalf("failed to approve task1: %v", err)
+	}
+	if err := q.ApproveTask(task2.ID); err != nil {
+		t.Fatalf("failed to approve task2: %v", err)
+	}
+	if err := q.ApproveTask(task3.ID); err != nil {
+		t.Fatalf("failed to approve task3: %v", err)
+	}
 
 	// Execute all approved
 	executor := core.NewExecutor(5 * time.Second)

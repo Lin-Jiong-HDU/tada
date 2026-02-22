@@ -114,13 +114,14 @@ func ClearSession() error {
 
 func generateSessionID() string {
 	now := time.Now()
-	return fmt.Sprintf("%d-%02d-%02d-%02d%02d%02d",
+	return fmt.Sprintf("%d-%02d-%02d-%02d%02d%02d-%09d",
 		now.Year(),
 		now.Month(),
 		now.Day(),
 		now.Hour(),
 		now.Minute(),
-		now.Second())
+		now.Second(),
+		now.Nanosecond())
 }
 
 func getSessionDir(sessionID string) (string, error) {

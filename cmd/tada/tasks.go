@@ -51,25 +51,49 @@ func runTasks(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Create a cancellable context tied to the TUI lifetime
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Create a task reload function to get fresh data from queue
+	taskReloadFunc := func(taskID string) *queue.Task {
+		q := findQueueForTask(queues, taskID)
+		if q == nil {
+			return nil
+		}
+		tasks := q.GetAllTasks()
+		for _, task := range tasks {
+			if task.ID == taskID {
+				return task
+			}
+		}
+		return nil
+	}
+
 	// Create handlers that persist to the appropriate queue and execute
 	onAuthorize := func(taskID string) tea.Cmd {
 		return func() tea.Msg {
 			q := findQueueForTask(queues, taskID)
-			if q != nil {
-				// Approve the task
-				if err := q.ApproveTask(taskID); err != nil {
-					return tui.AuthorizeResultMsg{TaskID: taskID, Success: false}
-				}
-
-				// Execute the task immediately
-				ctx := context.Background()
-				executor := core.NewExecutor(30 * time.Second)
-				taskExecutor := execution.NewTaskExecutor(q, executor)
-
-				go func() {
-					_ = taskExecutor.ExecuteTask(ctx, taskID)
-				}()
+			if q == nil {
+				// Queue (and thus task) not found; report authorization failure
+				return tui.AuthorizeResultMsg{TaskID: taskID, Success: false}
 			}
+
+			// Approve the task
+			if err := q.ApproveTask(taskID); err != nil {
+				return tui.AuthorizeResultMsg{TaskID: taskID, Success: false}
+			}
+
+			// Execute the task immediately using the shared cancellable context
+			executor := core.NewExecutor(30 * time.Second)
+			taskExecutor := execution.NewTaskExecutor(q, executor)
+
+			go func() {
+				if err := taskExecutor.ExecuteTask(ctx, taskID); err != nil {
+					// Log the error but don't crash - the queue will have the failed status
+					fmt.Printf("⚠️  Task execution failed: %v\n", err)
+				}
+			}()
 			return tui.AuthorizeResultMsg{TaskID: taskID, Success: true}
 		}
 	}
@@ -87,7 +111,7 @@ func runTasks(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create TUI model with persistence handlers
-	model := tui.NewModelWithOptions(pendingTasks, onAuthorize, onReject)
+	model := tui.NewModelWithOptions(pendingTasks, onAuthorize, onReject, taskReloadFunc)
 
 	// Run TUI
 	p := tea.NewProgram(model, tea.WithAltScreen())
