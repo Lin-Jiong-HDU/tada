@@ -134,10 +134,18 @@ func (r *REPL) HandleCommand(cmd string) (bool, error) {
 
 	case "/prompt":
 		if len(parts) < 2 {
-			fmt.Println("用法: /prompt <name>")
+			// 没有参数，列出可用的 prompts
+			r.DisplayAvailablePrompts()
 			return false, nil
 		}
-		fmt.Printf("切换 prompt: %s (未实现)\n", parts[1])
+
+		// 切换 prompt
+		if err := r.manager.SwitchPrompt(r.conversation.ID, parts[1]); err != nil {
+			fmt.Printf("切换 prompt 失败: %v\n", err)
+			return false, nil
+		}
+
+		fmt.Printf("✓ 已切换到 prompt: %s\n", parts[1])
 		return false, nil
 
 	default:
@@ -150,12 +158,39 @@ func (r *REPL) HandleCommand(cmd string) (bool, error) {
 func (r *REPL) DisplayHelp() {
 	help := `
 可用命令:
-  /help         显示此帮助
-  /clear        清屏
-  /prompt <name> 切换 prompt 模板
-  /exit, /quit  退出并保存
+  /help              显示此帮助
+  /clear             清屏
+  /prompt [name]     切换/列出 prompt 模板
+  /exit, /quit       退出并保存
 `
 	fmt.Println(help)
+}
+
+// DisplayAvailablePrompts 显示可用的 prompt 模板
+func (r *REPL) DisplayAvailablePrompts() {
+	prompts, err := r.manager.ListPrompts()
+	if err != nil {
+		fmt.Printf("获取 prompt 列表失败: %v\n", err)
+		return
+	}
+
+	if len(prompts) == 0 {
+		fmt.Println("没有可用的 prompt 模板")
+		return
+	}
+
+	fmt.Println("\n可用的 prompt 模板:")
+	for _, p := range prompts {
+		if p.Title != "" {
+			fmt.Printf("  • %s - %s\n", p.Name, p.Title)
+		} else {
+			fmt.Printf("  • %s\n", p.Name)
+		}
+		if p.Description != "" {
+			fmt.Printf("    %s\n", p.Description)
+		}
+	}
+	fmt.Println()
 }
 
 // DisplayExitSummary 显示退出摘要

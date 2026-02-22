@@ -63,6 +63,25 @@ func (c *Conversation) SetEphemeral(ephemeral bool) {
 	c.ephemeral = ephemeral
 }
 
+// SwitchPrompt 切换对话的 prompt 模板
+// 替换系统消息为新的 prompt，保留用户和助手的对话历史
+func (c *Conversation) SwitchPrompt(newPromptName string, newSystemPrompt string) {
+	// 移除旧的系统消息（第一条消息）
+	if len(c.Messages) > 0 && c.Messages[0].Role == "system" {
+		c.Messages = c.Messages[1:]
+	}
+
+	// 在开头插入新的系统消息
+	c.PromptName = newPromptName
+	systemMsg := Message{
+		Role:      "system",
+		Content:   newSystemPrompt,
+		Timestamp: time.Now(),
+	}
+	c.Messages = append([]Message{systemMsg}, c.Messages...)
+	c.UpdatedAt = time.Now()
+}
+
 // ToAIFormat 转换为 AI 消息格式
 func (m *Message) ToAIFormat() ai.Message {
 	return ai.Message{

@@ -100,6 +100,38 @@ func (m *Manager) Delete(id string) error {
 	return m.storage.Delete(id)
 }
 
+// SwitchPrompt 切换对话的 prompt 模板
+func (m *Manager) SwitchPrompt(convID, newPromptName string) error {
+	conv, err := m.Get(convID)
+	if err != nil {
+		return fmt.Errorf("conversation not found: %w", err)
+	}
+
+	// 加载新的 prompt
+	prompt, err := m.promptLoader.Load(newPromptName)
+	if err != nil {
+		log.Printf("Warning: failed to load prompt '%s': %v", newPromptName, err)
+		return fmt.Errorf("failed to load prompt '%s': %w", newPromptName, err)
+	}
+
+	// 切换 prompt
+	conv.SwitchPrompt(newPromptName, prompt.SystemPrompt)
+
+	// 保存（临时对话不保存）
+	if !conv.IsEphemeral() {
+		if err := m.storage.Save(conv); err != nil {
+			return fmt.Errorf("failed to save conversation: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// ListPrompts 列出所有可用的 prompt 模板
+func (m *Manager) ListPrompts() ([]*PromptTemplate, error) {
+	return m.promptLoader.List()
+}
+
 // Chat 发送消息并获取回复
 func (m *Manager) Chat(convID string, userInput string) (string, error) {
 	conv, err := m.Get(convID)

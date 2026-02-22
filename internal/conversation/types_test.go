@@ -89,3 +89,27 @@ func TestConversation_IsEphemeral(t *testing.T) {
 		t.Errorf("Expected 1 message, got %d", len(conv.Messages))
 	}
 }
+
+func TestConversation_SwitchPrompt(t *testing.T) {
+	conv := NewConversation("default")
+	conv.AddMessage(Message{Role: "system", Content: "Old prompt", Timestamp: time.Now()})
+	conv.AddMessage(Message{Role: "user", Content: "Hello", Timestamp: time.Now()})
+
+	conv.SwitchPrompt("coder", "You are a coding expert.")
+
+	if conv.PromptName != "coder" {
+		t.Errorf("Expected PromptName 'coder', got '%s'", conv.PromptName)
+	}
+
+	if len(conv.Messages) != 2 {
+		t.Errorf("Expected 2 messages, got %d", len(conv.Messages))
+	}
+
+	if conv.Messages[0].Content != "You are a coding expert." {
+		t.Errorf("Expected new system prompt, got '%s'", conv.Messages[0].Content)
+	}
+
+	if conv.Messages[1].Content != "Hello" {
+		t.Errorf("Expected user message preserved, got '%s'", conv.Messages[1].Content)
+	}
+}
