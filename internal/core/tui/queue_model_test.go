@@ -42,8 +42,8 @@ func TestModel_Init(t *testing.T) {
 	}
 
 	cmd := m.Init()
-	if cmd != nil {
-		t.Error("Expected nil command from Init")
+	if cmd == nil {
+		t.Error("Expected command from Init to get window size")
 	}
 }
 

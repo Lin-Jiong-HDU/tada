@@ -24,6 +24,8 @@ type model struct {
 	onReject       func(string) tea.Cmd
 	taskReloadFunc TaskReloadFunc
 	pendingG       bool // Tracks if 'g' was pressed for 'gg' command
+	width          int
+	height         int
 }
 
 // NewModel creates a new queue UI model
@@ -66,12 +68,18 @@ func defaultRejectHandler(taskID string) tea.Cmd {
 
 // Init initializes the model
 func (m model) Init() tea.Cmd {
-	return nil
+	return tea.Batch(
+		tea.WindowSize(),
+	)
 }
 
 // Update handles messages
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
 	case tea.KeyMsg:
 		return m.handleKeyMsg(msg)
 
@@ -264,10 +272,50 @@ func (m model) renderQueue() string {
 		}
 	}
 
+	// Get footer
+	footer := m.renderFooter()
+
+	// Calculate lines to push footer to bottom
+	// Count lines in header (2), content, and footer
+	headerLines := 2
+	contentLines := countLines(content)
+	footerLines := countLines(footer)
+
+	totalLines := headerLines + contentLines + footerLines
+
+	// If we have window height, add padding to push footer to bottom
+	if m.height > 0 {
+		paddingNeeded := m.height - totalLines
+		if paddingNeeded > 0 {
+			// Add empty lines to push footer to bottom
+			for i := 0; i < paddingNeeded; i++ {
+				content += "\n"
+			}
+		}
+	}
+
 	// Combine content with footer
-	s += content + m.renderFooter()
+	s += content + footer
 
 	return s
+}
+
+// countLines counts the number of lines in a string
+func countLines(s string) int {
+	if s == "" {
+		return 0
+	}
+	count := 0
+	for _, ch := range s {
+		if ch == '\n' {
+			count++
+		}
+	}
+	// If string doesn't end with newline, count the last line
+	if len(s) > 0 && s[len(s)-1] != '\n' {
+		count++
+	}
+	return count
 }
 
 func (m model) renderHelp() string {
