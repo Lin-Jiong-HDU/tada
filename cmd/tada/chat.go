@@ -79,6 +79,11 @@ func runChat(cmd *cobra.Command, args []string) error {
 	conversationsDir := filepath.Join(configDir, "conversations")
 	promptsDir := filepath.Join(configDir, "prompts")
 
+	// 确保默认 prompts 存在
+	if err := conversation.EnsureDefaultPrompts(promptsDir); err != nil {
+		return fmt.Errorf("初始化 prompts 失败: %w", err)
+	}
+
 	convStorage := conversation.NewFileStorage(conversationsDir)
 	promptLoader := conversation.NewPromptLoader(promptsDir)
 	manager := conversation.NewManager(convStorage, promptLoader, aiProvider)
