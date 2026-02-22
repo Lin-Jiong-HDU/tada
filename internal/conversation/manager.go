@@ -3,6 +3,7 @@ package conversation
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -33,6 +34,7 @@ func (m *Manager) Create(name, promptName string) (*Conversation, error) {
 	// 加载 prompt 模板
 	prompt, err := m.promptLoader.Load(promptName)
 	if err != nil {
+		log.Printf("Warning: failed to load prompt '%s': %v, using default", promptName, err)
 		// 如果加载失败，使用默认 prompt
 		conv.AddMessage(Message{
 			Role:    "system",
