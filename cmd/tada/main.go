@@ -115,7 +115,7 @@ func main() {
 		return
 	}
 
-	// For backward compatibility: if first arg is not a known command, treat as chat
+	// For backward compatibility: if first arg is not a known command, execute as single-shot command
 	// Check exact match for commands (no path separators) to avoid conflicts with files/directories
 	// Also exclude flags (starting with '-') to preserve help/flag behavior
 	if len(os.Args) > 1 {
@@ -123,8 +123,8 @@ func main() {
 		// Only treat as command if it's an exact match without path separators and not a flag
 		if arg != "chat" && arg != "tasks" && arg != "run" && arg != "help" &&
 			!containsPathSeparator(arg) && !isFlag(arg) {
-			// Prepend "chat" to args for backward compatibility
-			args := append([]string{"chat"}, os.Args[1:]...)
+			// Use quick command for single-shot command execution
+			args := append([]string{"quick"}, os.Args[1:]...)
 			rootCmd.SetArgs(args)
 		}
 	}
