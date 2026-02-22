@@ -137,3 +137,46 @@ func TestModel_Update_QuitKey(t *testing.T) {
 		t.Error("Expected QuitMsg")
 	}
 }
+
+func TestModel_Update_GG_GoToTop(t *testing.T) {
+	tasks := []*queue.Task{
+		{ID: "1", Status: queue.TaskStatusPending},
+		{ID: "2", Status: queue.TaskStatusPending},
+		{ID: "3", Status: queue.TaskStatusPending},
+	}
+	mdl := NewModel(tasks)
+	m := mdl.(model)
+	m.cursor = 2 // Start at bottom
+
+	// Press g (first time)
+	msg1 := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'g'}}
+	newMdl1, _ := m.Update(msg1)
+	m1 := newMdl1.(model)
+
+	// Press g again (gg should go to top)
+	msg2 := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'g'}}
+	newMdl2, _ := m1.Update(msg2)
+	m2 := newMdl2.(model)
+
+	if m2.cursor != 0 {
+		t.Errorf("Expected cursor at 0 after gg, got %d", m2.cursor)
+	}
+}
+
+func TestModel_Update_G_GoToBottom(t *testing.T) {
+	tasks := []*queue.Task{
+		{ID: "1", Status: queue.TaskStatusPending},
+		{ID: "2", Status: queue.TaskStatusPending},
+		{ID: "3", Status: queue.TaskStatusPending},
+	}
+	mdl := NewModel(tasks)
+
+	// Press G to go to bottom
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'G'}}
+	newMdl, _ := mdl.Update(msg)
+
+	m := newMdl.(model)
+	if m.cursor != 2 {
+		t.Errorf("Expected cursor at 2 (last item), got %d", m.cursor)
+	}
+}

@@ -23,6 +23,7 @@ type model struct {
 	onAuthorize    func(string) tea.Cmd
 	onReject       func(string) tea.Cmd
 	taskReloadFunc TaskReloadFunc
+	pendingG       bool // Tracks if 'g' was pressed for 'gg' command
 }
 
 // NewModel creates a new queue UI model
@@ -144,13 +145,31 @@ func (m model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Handle navigation
 	switch msg.String() {
 	case "k", "up":
+		m.pendingG = false
 		if m.cursor > 0 {
 			m.cursor--
 		}
 	case "j", "down":
+		m.pendingG = false
 		if m.cursor < len(m.tasks)-1 {
 			m.cursor++
 		}
+	case "g":
+		// Handle vim-style gg to go to top
+		if m.pendingG {
+			m.cursor = 0
+			m.pendingG = false
+		} else {
+			m.pendingG = true
+		}
+	case "G":
+		m.pendingG = false
+		// Go to bottom
+		if len(m.tasks) > 0 {
+			m.cursor = len(m.tasks) - 1
+		}
+	default:
+		m.pendingG = false
 	}
 
 	// Handle actions

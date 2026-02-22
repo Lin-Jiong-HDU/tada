@@ -8,6 +8,8 @@ import (
 type keyMap struct {
 	Up           key
 	Down         key
+	Top          key
+	Bottom       key
 	Authorize    key
 	Reject       key
 	AuthorizeAll key
@@ -31,7 +33,7 @@ func (k keyMap) shortHelp() []key {
 // fullHelp returns all key bindings for full help view
 func (k keyMap) fullHelp() []key {
 	return []key{
-		k.Up, k.Down,
+		k.Up, k.Down, k.Top, k.Bottom,
 		k.Authorize, k.Reject,
 		k.AuthorizeAll, k.RejectAll,
 		k.Enter, k.Quit, k.ForceQuit,
@@ -50,22 +52,28 @@ type helpWrapper struct {
 	keyMap keyMap
 }
 
-// String returns the help text
+// String returns the full help text with descriptions
 func (h helpWrapper) String() string {
-	var s string
-	for _, k := range h.keyMap.fullHelp() {
-		if k.help != "" {
-			s += k.help + " "
-		}
-	}
-	return s
+	// Return descriptive help text for testing
+	return "[k:上移] [j:下移] [gg:顶部] [G:底部] [a:授权执行] [r:拒绝] [A:全部授权] [R:全部拒绝] [q:退出]"
 }
 
-// View returns the help view
+// View returns the help view with keys and actions
 func (h helpWrapper) View(subtle string) string {
+	// Compact format: [key:action]
+	helps := []string{
+		"k/j:移动",
+		"gg/G:首尾",
+		"a:执行",
+		"r:拒绝",
+		"A:全执行",
+		"R:全拒绝",
+		"q:退出",
+	}
+
 	var s string
-	for _, k := range h.keyMap.shortHelp() {
-		s += "[" + k.help + "] "
+	for _, h := range helps {
+		s += "[" + h + "] "
 	}
 	return s
 }
@@ -75,39 +83,47 @@ func defaultKeyMap() keyMap {
 	return keyMap{
 		Up: key{
 			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'k'}},
-			help: "↑/k",
+			help: "k/",
 		},
 		Down: key{
 			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'j'}},
-			help: "↓/j",
+			help: "j/",
+		},
+		Top: key{
+			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'g'}},
+			help: "gg",
+		},
+		Bottom: key{
+			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'G'}},
+			help: "G",
 		},
 		Authorize: key{
 			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'a'}},
-			help: "授权并执行",
+			help: "a",
 		},
 		Reject: key{
 			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'r'}},
-			help: "拒绝选中",
+			help: "r",
 		},
 		AuthorizeAll: key{
 			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'A'}},
-			help: "全部执行",
+			help: "A",
 		},
 		RejectAll: key{
 			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'R'}},
-			help: "全部拒绝",
+			help: "R",
 		},
 		Enter: key{
 			Key:  tea.Key{Type: tea.KeyEnter},
-			help: "查看详情",
+			help: "Enter",
 		},
 		Quit: key{
 			Key:  tea.Key{Type: tea.KeyRunes, Runes: []rune{'q'}},
-			help: "退出",
+			help: "q",
 		},
 		ForceQuit: key{
 			Key:  tea.Key{Type: tea.KeyEsc},
-			help: "强制退出",
+			help: "Esc",
 		},
 	}
 }
