@@ -88,25 +88,23 @@ func (r *REPL) processStreamChat(input string) error {
 		return err
 	}
 
+	var fullResponse strings.Builder
+	for chunk := range stream {
+		fullResponse.WriteString(chunk)
+	}
+
 	// 清除 "思考中..."
 	if r.showThinking {
 		fmt.Print("\r\033[K")
 	}
 
+	// 渲染美化版本
 	fmt.Print("🤖 ")
-
-	var fullResponse strings.Builder
-	for chunk := range stream {
-		fmt.Print(chunk)
-		fullResponse.WriteString(chunk)
-	}
-
-	fmt.Println()
-
-	// 重新渲染美化版本
 	if r.renderer != nil {
 		rendered, _ := r.renderer.Render(fullResponse.String())
 		fmt.Print(rendered)
+	} else {
+		fmt.Println(fullResponse.String())
 	}
 
 	return nil
