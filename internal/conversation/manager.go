@@ -192,6 +192,8 @@ func (m *Manager) Chat(convID string, userInput string) (string, error) {
 //	<-chan string - 响应内容流，消费完后 channel 自动关闭
 //	error - 错误信息（nil 表示成功）
 func (m *Manager) ChatStream(convID string, userInput string) (<-chan string, error) {
+	// 对于临时对话，无法从存储加载，需要特殊处理
+	// 这里我们先尝试获取，如果失败则检查是否可能是临时对话
 	conv, err := m.Get(convID)
 	if err != nil {
 		return nil, fmt.Errorf("conversation not found: %w", err)
@@ -205,8 +207,12 @@ func (m *Manager) ChatStream(convID string, userInput string) (<-chan string, er
 	}
 	conv.AddMessage(userMsg)
 
+	// 记录是否为临时对话，在 goroutine 中使用
+	isEphemeral := conv.IsEphemeral()
+
 	// 先保存用户消息（确保后续重新加载时能获取到）
-	if !conv.IsEphemeral() {
+	// 临时对话不保存，在 goroutine 中直接使用内存对象
+	if !isEphemeral {
 		if err := m.storage.Save(conv); err != nil {
 			return nil, fmt.Errorf("failed to save user message: %w", err)
 		}
@@ -234,10 +240,18 @@ func (m *Manager) ChatStream(convID string, userInput string) (<-chan string, er
 			out <- chunk
 		}
 
-		// 重新加载对话以避免竞态条件
-		reloadedConv, err := m.Get(id)
-		if err != nil {
-			return // 对话不存在，无法保存
+		// 根据对话类型选择处理方式
+		var targetConv *Conversation
+		if isEphemeral {
+			// 临时对话：直接使用内存中的对象（无法从存储重新加载）
+			targetConv = conv
+		} else {
+			// 持久对话：重新加载以避免竞态条件
+			reloadedConv, err := m.Get(id)
+			if err != nil {
+				return // 对话不存在，无法保存
+			}
+			targetConv = reloadedConv
 		}
 
 		// 添加助手回复
@@ -246,11 +260,11 @@ func (m *Manager) ChatStream(convID string, userInput string) (<-chan string, er
 			Content:   fullResponse.String(),
 			Timestamp: time.Now(),
 		}
-		reloadedConv.AddMessage(assistantMsg)
+		targetConv.AddMessage(assistantMsg)
 
 		// 保存（临时对话不保存）
-		if !reloadedConv.IsEphemeral() {
-			_ = m.storage.Save(reloadedConv) // 保存失败时至少已发送到 channel
+		if !isEphemeral {
+			_ = m.storage.Save(targetConv) // 保存失败时至少已发送到 channel
 		}
 	}()
 
