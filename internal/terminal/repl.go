@@ -85,22 +85,33 @@ func (r *REPL) processStreamChat(input string) error {
 
 	stream, err := r.manager.ChatStream(r.conversation.ID, input)
 	if err != nil {
+		// 出错时清除思考提示
+		if r.showThinking {
+			fmt.Print("\r\033[K")
+		}
 		return err
 	}
 
-	var fullResponse strings.Builder
-	for chunk := range stream {
-		fmt.Print(chunk)                // 实时显示原文（流式效果）
-		fullResponse.WriteString(chunk) // 同时存储用于渲染
-	}
-
-	// 清除 "思考中..."
+	// 在开始流式输出前清除思考提示
 	if r.showThinking {
 		fmt.Print("\r\033[K")
 	}
 
+	var fullResponse strings.Builder
+	lineCount := 1 // 记录流式输出的行数
+	for chunk := range stream {
+		fmt.Print(chunk) // 实时显示原文（流式效果）
+		lineCount += strings.Count(chunk, "\n")
+		fullResponse.WriteString(chunk) // 同时存储用于渲染
+	}
+
+	// 清除流式输出的原文：上移 lineCount 行并清除
+	if lineCount > 0 {
+		fmt.Printf("\033[%dA\033[J", lineCount)
+	}
+
 	// 渲染美化版本
-	fmt.Print("🤖 ")
+	fmt.Print("\n🤖\n")
 	if r.renderer != nil {
 		rendered, _ := r.renderer.Render(fullResponse.String())
 		fmt.Print(rendered)
