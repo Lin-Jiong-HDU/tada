@@ -13,22 +13,22 @@ var ErrUserExit = errors.New("user requested exit")
 
 // REPL 交互式对话
 type REPL struct {
-	manager          *conversation.Manager
-	conversation     *conversation.Conversation
-	renderer         *conversation.Renderer
-	stream           bool
-	showThinking     bool
-	maxDisplayLines  int  // 流式输出最大显示行数
+	manager         *conversation.Manager
+	conversation    *conversation.Conversation
+	renderer        *conversation.Renderer
+	stream          bool
+	showThinking    bool
+	maxDisplayLines int // 流式输出最大显示行数
 }
 
 // NewREPL 创建 REPL
 func NewREPL(manager *conversation.Manager, conv *conversation.Conversation, stream bool, maxDisplayLines int) *REPL {
 	return &REPL{
-		manager:          manager,
-		conversation:     conv,
-		stream:           stream,
-		showThinking:     true,
-		maxDisplayLines:  maxDisplayLines,
+		manager:         manager,
+		conversation:    conv,
+		stream:          stream,
+		showThinking:    true,
+		maxDisplayLines: maxDisplayLines,
 	}
 }
 

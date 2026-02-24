@@ -42,11 +42,11 @@ type StreamingConfig struct {
 
 // ChatConfig holds chat-related configuration
 type ChatConfig struct {
-	DefaultPrompt  string         `mapstructure:"default_prompt"`
-	MaxHistory     int            `mapstructure:"max_history"`
-	AutoSave       bool           `mapstructure:"auto_save"`
-	Stream         bool           `mapstructure:"stream"`
-	RenderMarkdown bool           `mapstructure:"render_markdown"`
+	DefaultPrompt  string          `mapstructure:"default_prompt"`
+	MaxHistory     int             `mapstructure:"max_history"`
+	AutoSave       bool            `mapstructure:"auto_save"`
+	Stream         bool            `mapstructure:"stream"`
+	RenderMarkdown bool            `mapstructure:"render_markdown"`
 	Streaming      StreamingConfig `mapstructure:"streaming"`
 }
 
