@@ -39,8 +39,21 @@ func (t *LineTracker) Track(text string) (displayText string, overflow bool) {
 		return "", false
 	}
 
-	// 无限制模式
+	// 无限制模式：仍然追踪行数用于清除，但不限制输出
 	if t.maxLines == 0 {
+		for _, r := range text {
+			if r == '\n' {
+				t.lineCount++
+				t.currentPos = 0
+			} else {
+				charWidth := runewidth.RuneWidth(r)
+				if t.currentPos+charWidth > t.maxWidth {
+					t.lineCount++
+					t.currentPos = 0
+				}
+				t.currentPos += charWidth
+			}
+		}
 		return text, false
 	}
 

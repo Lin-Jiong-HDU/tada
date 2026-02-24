@@ -137,7 +137,7 @@ func runChat(cmd *cobra.Command, args []string) error {
 
 	// 从配置读取流式输出行数限制
 	maxDisplayLines := 10 // 默认值
-	if cfg.Chat.Streaming.MaxDisplayLines > 0 {
+	if cfg.Chat.Streaming.MaxDisplayLines >= 0 {
 		maxDisplayLines = cfg.Chat.Streaming.MaxDisplayLines
 	}
 

@@ -116,7 +116,7 @@ func (r *REPL) processStreamChat(input string) error {
 	}
 
 	if tracker.LineCount() > 0 {
-		fmt.Printf("\033[%dA\033[J", tracker.LineCount())
+		fmt.Printf("\033[%dA\r\033[J", tracker.LineCount())
 	}
 
 	fmt.Print("\n🤖\n")
@@ -142,7 +142,7 @@ func (r *REPL) processStreamChatFallback(input string, stream <-chan string) err
 	}
 
 	if lineCount > 0 {
-		fmt.Printf("\033[%dA\033[J", lineCount)
+		fmt.Printf("\033[%dA\r\033[J", lineCount)
 	}
 
 	fmt.Print("\n🤖\n")
