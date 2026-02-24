@@ -69,3 +69,25 @@ func TestRenderIncremental_DiffRender(t *testing.T) {
 		t.Error("Expected oldLines to grow")
 	}
 }
+
+func TestIncrementalRenderer_Reset(t *testing.T) {
+	ir, _ := NewIncrementalRenderer(80)
+
+	// Do a render
+	ir.RenderIncremental("# Hello\n")
+
+	// Reset
+	ir.Reset()
+
+	if !ir.isFirst {
+		t.Error("Expected isFirst to be true after reset")
+	}
+
+	if len(ir.oldLines) != 0 {
+		t.Error("Expected oldLines to be empty after reset")
+	}
+
+	if ir.lineCount != 0 {
+		t.Error("Expected lineCount to be 0 after reset")
+	}
+}

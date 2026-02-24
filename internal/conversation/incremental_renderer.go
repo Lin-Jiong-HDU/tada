@@ -85,6 +85,13 @@ func (ir *IncrementalRenderer) RenderIncremental(markdown string) error {
 	return nil
 }
 
+// Reset 重置渲染器状态 (用于 resize 后)
+func (ir *IncrementalRenderer) Reset() {
+	ir.oldLines = nil
+	ir.lineCount = 0
+	ir.isFirst = true
+}
+
 // splitLines 按行切分字符串
 func splitLines(s string) []string {
 	lines := make([]string, 0)
