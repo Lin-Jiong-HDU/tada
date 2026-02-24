@@ -34,13 +34,20 @@ type AIConfig struct {
 	MaxTokens int    `mapstructure:"max_tokens"`
 }
 
+// StreamingConfig 流式输出配置
+type StreamingConfig struct {
+	// MaxDisplayLines 流式输出最大显示行数，0 表示不限制
+	MaxDisplayLines int `mapstructure:"max_display_lines"`
+}
+
 // ChatConfig holds chat-related configuration
 type ChatConfig struct {
-	DefaultPrompt  string `mapstructure:"default_prompt"`
-	MaxHistory     int    `mapstructure:"max_history"`
-	AutoSave       bool   `mapstructure:"auto_save"`
-	Stream         bool   `mapstructure:"stream"`
-	RenderMarkdown bool   `mapstructure:"render_markdown"`
+	DefaultPrompt  string         `mapstructure:"default_prompt"`
+	MaxHistory     int            `mapstructure:"max_history"`
+	AutoSave       bool           `mapstructure:"auto_save"`
+	Stream         bool           `mapstructure:"stream"`
+	RenderMarkdown bool           `mapstructure:"render_markdown"`
+	Streaming      StreamingConfig `mapstructure:"streaming"`
 }
 
 // DefaultChatConfig returns default chat configuration
@@ -51,6 +58,9 @@ func DefaultChatConfig() ChatConfig {
 		AutoSave:       true,
 		Stream:         true,
 		RenderMarkdown: true,
+		Streaming: StreamingConfig{
+			MaxDisplayLines: 10,
+		},
 	}
 }
 
@@ -100,6 +110,7 @@ func InitConfig() (*Config, error) {
 	v.SetDefault("chat.auto_save", true)
 	v.SetDefault("chat.stream", true)
 	v.SetDefault("chat.render_markdown", true)
+	v.SetDefault("chat.streaming.max_display_lines", 10)
 
 	// Read config file (ignore if not exists)
 	if err := v.ReadInConfig(); err != nil {
