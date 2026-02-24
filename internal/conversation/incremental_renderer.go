@@ -76,18 +76,16 @@ func (ir *IncrementalRenderer) RenderIncremental(markdown string) error {
 	}
 
 	// 移回差异行开始重绘（因为上面的循环把光标移下来了）
-	if linesToClear > 1 {
-		fmt.Printf("\033[%dA", linesToClear-1)
-	}
+	// 确保光标回到行首
+	fmt.Print("\r")
+
+	// 清除从光标到屏幕末尾的内容
+	fmt.Print("\033[J")
 
 	// 从差异行开始重绘
 	for i := diffIndex; i < len(newLines); i++ {
-		if i == len(newLines)-1 {
-			// 最后一行不需要换行（避免额外空行）
-			fmt.Print(newLines[i])
-		} else {
-			fmt.Println(newLines[i])
-		}
+		// 始终在行末输出换行符，保证光标在最后一行的下一行行首
+		fmt.Println(newLines[i])
 	}
 
 	// 更新状态
