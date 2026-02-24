@@ -66,8 +66,14 @@ func (ir *IncrementalRenderer) RenderIncremental(markdown string) error {
 	// 光标回退到差异行
 	fmt.Printf("\033[%dA", moveUp)
 
-	// 清除从光标到屏幕末尾的内容
-	fmt.Print("\033[J")
+	// 清除之前渲染的行（只清除到之前渲染的最后行，不是整个屏幕）
+	linesToClear := ir.lineCount - diffIndex
+	for i := 0; i < linesToClear; i++ {
+		fmt.Print("\033[K") // 清除当前行到行尾
+		if i < linesToClear-1 {
+			fmt.Print("\n") // 移动到下一行（最后一行不需要移动）
+		}
+	}
 
 	// 从差异行开始重绘
 	for i := diffIndex; i < len(newLines); i++ {
