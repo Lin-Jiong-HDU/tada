@@ -125,6 +125,11 @@ func InitConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
+	// Validate streaming config
+	if cfg.Chat.Streaming.MaxDisplayLines < 0 {
+		cfg.Chat.Streaming.MaxDisplayLines = 10 // reset to default
+	}
+
 	config = &cfg
 	return config, nil
 }
@@ -164,6 +169,14 @@ func SaveConfig(cfg *Config) error {
 	v.Set("security.allow_terminal_takeover", cfg.Security.AllowTerminalTakeover)
 	v.Set("security.restricted_paths", cfg.Security.RestrictedPaths)
 	v.Set("security.readonly_paths", cfg.Security.ReadOnlyPaths)
+
+	// Save chat config
+	v.Set("chat.default_prompt", cfg.Chat.DefaultPrompt)
+	v.Set("chat.max_history", cfg.Chat.MaxHistory)
+	v.Set("chat.auto_save", cfg.Chat.AutoSave)
+	v.Set("chat.stream", cfg.Chat.Stream)
+	v.Set("chat.render_markdown", cfg.Chat.RenderMarkdown)
+	v.Set("chat.streaming.max_display_lines", cfg.Chat.Streaming.MaxDisplayLines)
 
 	configPath := filepath.Join(configDir, ConfigFileName+"."+ConfigFileType)
 	return v.WriteConfigAs(configPath)
