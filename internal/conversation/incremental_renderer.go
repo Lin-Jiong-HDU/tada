@@ -105,6 +105,11 @@ func (ir *IncrementalRenderer) SetWidth(width int) error {
 	return nil
 }
 
+// LineCount 返回当前渲染的行数（用于测试）
+func (ir *IncrementalRenderer) LineCount() int {
+	return ir.lineCount
+}
+
 // splitLines 按行切分字符串
 func splitLines(s string) []string {
 	lines := make([]string, 0)
