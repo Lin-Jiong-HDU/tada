@@ -95,6 +95,7 @@ func (r *REPL) processStreamChat(input string) error {
 
 	if r.showThinking {
 		fmt.Print("\r\033[K")
+		fmt.Println()
 	}
 
 	var fullResponse strings.Builder
