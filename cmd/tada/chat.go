@@ -15,6 +15,7 @@ import (
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
 	"github.com/Lin-Jiong-HDU/tada/internal/terminal"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var (
@@ -145,6 +146,17 @@ func runChat(cmd *cobra.Command, args []string) error {
 	repl := terminal.NewREPL(manager, conv, !chatNoStream)
 	repl.SetRenderer(renderer)
 
+	// 创建增量渲染器
+	if !chatNoRender {
+		width := getTerminalWidth()
+		incrementalRenderer, err := conversation.NewIncrementalRenderer(width)
+		if err != nil {
+			fmt.Printf("Warning: failed to create incremental renderer: %v\n", err)
+		} else {
+			repl.SetIncrementalRenderer(incrementalRenderer)
+		}
+	}
+
 	fmt.Println("💬 输入消息，/help 查看命令，/exit 退出")
 	fmt.Println()
 
@@ -251,4 +263,12 @@ func runDeleteConversation(manager *conversation.Manager, id string) error {
 
 	fmt.Printf("✓ 对话已删除: %s\n", id)
 	return nil
+}
+
+func getTerminalWidth() int {
+	width, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		return 80 // 默认宽度
+	}
+	return width
 }
