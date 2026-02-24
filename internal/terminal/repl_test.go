@@ -46,7 +46,7 @@ func TestREPL_ProcessInput(t *testing.T) {
 	manager := conversation.NewManager(storage, promptLoader, aiProvider)
 	conv, _ := manager.Create("test", "default")
 
-	repl := NewREPL(manager, conv, false)
+	repl := NewREPL(manager, conv, false, 10)
 	renderer, _ := conversation.NewRenderer(80)
 	repl.SetRenderer(renderer)
 
@@ -74,7 +74,7 @@ func TestREPL_HandleCommand(t *testing.T) {
 	manager := conversation.NewManager(storage, promptLoader, aiProvider)
 	conv, _ := manager.Create("test", "default")
 
-	repl := NewREPL(manager, conv, false)
+	repl := NewREPL(manager, conv, false, 10)
 
 	// 测试 /help 命令
 	shouldExit, err := repl.HandleCommand("/help")
