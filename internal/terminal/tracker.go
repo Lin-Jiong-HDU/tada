@@ -2,7 +2,9 @@ package terminal
 
 import (
 	"os"
+	"strings"
 
+	"github.com/mattn/go-runewidth"
 	"golang.org/x/term"
 )
 
@@ -29,4 +31,61 @@ func NewLineTracker(maxLines int) (*LineTracker, error) {
 		maxLines:   maxLines,
 		stopped:    false,
 	}, nil
+}
+
+// Track 追踪文本，返回应该显示的文本和是否超限
+func (t *LineTracker) Track(text string) (displayText string, overflow bool) {
+	if t.stopped {
+		return "", false
+	}
+
+	// 无限制模式
+	if t.maxLines == 0 {
+		return text, false
+	}
+
+	var result strings.Builder
+
+	for _, r := range text {
+		// 处理换行符
+		if r == '\n' {
+			t.lineCount++
+			t.currentPos = 0
+			result.WriteRune(r)
+			if t.lineCount > t.maxLines {
+				t.stopped = true
+				return result.String(), true
+			}
+			continue
+		}
+
+		charWidth := runewidth.RuneWidth(r)
+
+		// 检查是否需要自动换行
+		if t.currentPos+charWidth > t.maxWidth {
+			t.lineCount++
+			t.currentPos = 0
+			if t.lineCount > t.maxLines {
+				t.stopped = true
+				return result.String(), true
+			}
+		}
+
+		t.currentPos += charWidth
+		result.WriteRune(r)
+	}
+
+	return result.String(), false
+}
+
+// LineCount 返回当前追踪的总行数
+func (t *LineTracker) LineCount() int {
+	return t.lineCount
+}
+
+// Reset 重置追踪器状态
+func (t *LineTracker) Reset() {
+	t.currentPos = 0
+	t.lineCount = 1
+	t.stopped = false
 }
