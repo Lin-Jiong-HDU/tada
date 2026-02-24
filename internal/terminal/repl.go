@@ -13,11 +13,12 @@ var ErrUserExit = errors.New("user requested exit")
 
 // REPL 交互式对话
 type REPL struct {
-	manager      *conversation.Manager
-	conversation *conversation.Conversation
-	renderer     *conversation.Renderer
-	stream       bool
-	showThinking bool
+	manager            *conversation.Manager
+	conversation       *conversation.Conversation
+	renderer           *conversation.Renderer
+	incrementalRenderer *conversation.IncrementalRenderer
+	stream             bool
+	showThinking       bool
 }
 
 // NewREPL 创建 REPL
@@ -33,6 +34,11 @@ func NewREPL(manager *conversation.Manager, conv *conversation.Conversation, str
 // SetRenderer 设置渲染器
 func (r *REPL) SetRenderer(renderer *conversation.Renderer) {
 	r.renderer = renderer
+}
+
+// SetIncrementalRenderer 设置增量渲染器
+func (r *REPL) SetIncrementalRenderer(ir *conversation.IncrementalRenderer) {
+	r.incrementalRenderer = ir
 }
 
 // ProcessInput 处理用户输入
@@ -98,26 +104,24 @@ func (r *REPL) processStreamChat(input string) error {
 	}
 
 	var fullResponse strings.Builder
-	lineCount := 1 // 记录流式输出的行数
+
 	for chunk := range stream {
-		fmt.Print(chunk) // 实时显示原文（流式效果）
-		lineCount += strings.Count(chunk, "\n")
-		fullResponse.WriteString(chunk) // 同时存储用于渲染
+		fullResponse.WriteString(chunk)
+
+		// 使用增量渲染
+		if r.incrementalRenderer != nil {
+			if err := r.incrementalRenderer.RenderIncremental(fullResponse.String()); err != nil {
+				// 渲染失败时降级到原始输出
+				fmt.Print(chunk)
+			}
+		} else {
+			// 降级到原始流式输出
+			fmt.Print(chunk)
+		}
 	}
 
-	// 清除流式输出的原文：上移 lineCount 行并清除
-	if lineCount > 0 {
-		fmt.Printf("\033[%dA\033[J", lineCount)
-	}
-
-	// 渲染美化版本
-	fmt.Print("\n🤖\n")
-	if r.renderer != nil {
-		rendered, _ := r.renderer.Render(fullResponse.String())
-		fmt.Print(rendered)
-	} else {
-		fmt.Println(fullResponse.String())
-	}
+	// 打印换行符
+	fmt.Println()
 
 	return nil
 }
