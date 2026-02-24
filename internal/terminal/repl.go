@@ -13,20 +13,22 @@ var ErrUserExit = errors.New("user requested exit")
 
 // REPL 交互式对话
 type REPL struct {
-	manager      *conversation.Manager
-	conversation *conversation.Conversation
-	renderer     *conversation.Renderer
-	stream       bool
-	showThinking bool
+	manager          *conversation.Manager
+	conversation     *conversation.Conversation
+	renderer         *conversation.Renderer
+	stream           bool
+	showThinking     bool
+	maxDisplayLines  int  // 流式输出最大显示行数
 }
 
 // NewREPL 创建 REPL
-func NewREPL(manager *conversation.Manager, conv *conversation.Conversation, stream bool) *REPL {
+func NewREPL(manager *conversation.Manager, conv *conversation.Conversation, stream bool, maxDisplayLines int) *REPL {
 	return &REPL{
-		manager:      manager,
-		conversation: conv,
-		stream:       stream,
-		showThinking: true,
+		manager:          manager,
+		conversation:     conv,
+		stream:           stream,
+		showThinking:     true,
+		maxDisplayLines:  maxDisplayLines,
 	}
 }
 
@@ -85,32 +87,64 @@ func (r *REPL) processStreamChat(input string) error {
 
 	stream, err := r.manager.ChatStream(r.conversation.ID, input)
 	if err != nil {
-		// 出错时清除思考提示
 		if r.showThinking {
 			fmt.Print("\r\033[K")
 		}
 		return err
 	}
 
-	// 在开始流式输出前清除思考提示
 	if r.showThinking {
 		fmt.Print("\r\033[K")
 	}
 
 	var fullResponse strings.Builder
-	lineCount := 1 // 记录流式输出的行数
-	for chunk := range stream {
-		fmt.Print(chunk) // 实时显示原文（流式效果）
-		lineCount += strings.Count(chunk, "\n")
-		fullResponse.WriteString(chunk) // 同时存储用于渲染
+
+	tracker, err := NewLineTracker(r.maxDisplayLines)
+	if err != nil {
+		return r.processStreamChatFallback(input, stream)
 	}
 
-	// 清除流式输出的原文：上移 lineCount 行并清除
+	for chunk := range stream {
+		fullResponse.WriteString(chunk)
+		displayText, overflow := tracker.Track(chunk)
+		if displayText != "" {
+			fmt.Print(displayText)
+		}
+		if overflow {
+			fmt.Print("...")
+		}
+	}
+
+	if tracker.LineCount() > 0 {
+		fmt.Printf("\033[%dA\033[J", tracker.LineCount())
+	}
+
+	fmt.Print("\n🤖\n")
+	if r.renderer != nil {
+		rendered, _ := r.renderer.Render(fullResponse.String())
+		fmt.Print(rendered)
+	} else {
+		fmt.Println(fullResponse.String())
+	}
+
+	return nil
+}
+
+// processStreamChatFallback 降级处理
+func (r *REPL) processStreamChatFallback(input string, stream <-chan string) error {
+	var fullResponse strings.Builder
+	lineCount := 1
+
+	for chunk := range stream {
+		fmt.Print(chunk)
+		lineCount += strings.Count(chunk, "\n")
+		fullResponse.WriteString(chunk)
+	}
+
 	if lineCount > 0 {
 		fmt.Printf("\033[%dA\033[J", lineCount)
 	}
 
-	// 渲染美化版本
 	fmt.Print("\n🤖\n")
 	if r.renderer != nil {
 		rendered, _ := r.renderer.Render(fullResponse.String())
