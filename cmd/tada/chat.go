@@ -135,6 +135,12 @@ func runChat(cmd *cobra.Command, args []string) error {
 		fmt.Printf("📝 新对话 (%s)\n", conv.PromptName)
 	}
 
+	// 从配置读取流式输出行数限制
+	maxDisplayLines := 10 // 默认值
+	if cfg.Chat.Streaming.MaxDisplayLines >= 0 {
+		maxDisplayLines = cfg.Chat.Streaming.MaxDisplayLines
+	}
+
 	// 创建 renderer
 	var renderer *conversation.Renderer
 	if !chatNoRender {
@@ -142,7 +148,7 @@ func runChat(cmd *cobra.Command, args []string) error {
 	}
 
 	// 运行 REPL
-	repl := terminal.NewREPL(manager, conv, !chatNoStream)
+	repl := terminal.NewREPL(manager, conv, !chatNoStream, maxDisplayLines)
 	repl.SetRenderer(renderer)
 
 	fmt.Println("💬 输入消息，/help 查看命令，/exit 退出")

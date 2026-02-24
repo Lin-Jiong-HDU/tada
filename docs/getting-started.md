@@ -163,6 +163,22 @@ chat:
   render_markdown: true          # Render markdown output
 ```
 
+### Streaming Configuration
+
+Add streaming-specific settings to control display behavior:
+
+```yaml
+chat:
+  streaming:
+    max_display_lines: 10        # 流式输出最大显示行数（默认 10）
+                                  # 设为 0 表示不限制行数
+```
+
+- `max_display_lines`: 控制流式输出时显示的最大行数
+  - 超过此行数后，流式输出将停止并显示 "..."
+  - 流式结束后会清除原文并渲染完整的 markdown
+  - 设为 0 表示不限制，完全流式输出
+
 ## Security Configuration
 
 tada includes security controls to protect against dangerous AI-generated commands.

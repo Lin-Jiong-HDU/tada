@@ -101,3 +101,27 @@ func TestSecurityDefaults(t *testing.T) {
 		t.Error("Expected default allow_shell to be true")
 	}
 }
+
+func TestStreamingConfigDefaults(t *testing.T) {
+	oldHome := os.Getenv("HOME")
+	tmpDir, _ := os.MkdirTemp("", "tada-test-*")
+	defer os.RemoveAll(tmpDir)
+	os.Setenv("HOME", tmpDir)
+	defer os.Setenv("HOME", oldHome)
+
+	cfg, err := InitConfig()
+	if err != nil {
+		t.Fatalf("InitConfig failed: %v", err)
+	}
+
+	if cfg.Chat.Streaming.MaxDisplayLines != 10 {
+		t.Errorf("Expected default MaxDisplayLines 10, got %d", cfg.Chat.Streaming.MaxDisplayLines)
+	}
+}
+
+func TestDefaultChatConfig(t *testing.T) {
+	cfg := DefaultChatConfig()
+	if cfg.Streaming.MaxDisplayLines != 10 {
+		t.Errorf("Expected default MaxDisplayLines 10, got %d", cfg.Streaming.MaxDisplayLines)
+	}
+}
