@@ -104,17 +104,20 @@ func (r *REPL) processStreamChat(input string) error {
 	}
 
 	var fullResponse strings.Builder
+	incrementalFailed := false
 
 	for chunk := range stream {
 		fullResponse.WriteString(chunk)
 
 		// 使用增量渲染
-		if r.incrementalRenderer != nil {
+		if r.incrementalRenderer != nil && !incrementalFailed {
 			if err := r.incrementalRenderer.RenderIncremental(fullResponse.String()); err != nil {
 				// 渲染失败时降级到原始输出
-				fmt.Print(chunk)
+				// 打印完整响应以确保用户看到所有内容
+				fmt.Print(fullResponse.String())
+				incrementalFailed = true
 			}
-		} else {
+		} else if incrementalFailed || r.incrementalRenderer == nil {
 			// 降级到原始流式输出
 			fmt.Print(chunk)
 		}
