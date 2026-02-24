@@ -71,8 +71,13 @@ func (ir *IncrementalRenderer) RenderIncremental(markdown string) error {
 	for i := 0; i < linesToClear; i++ {
 		fmt.Print("\033[K") // 清除当前行到行尾
 		if i < linesToClear-1 {
-			fmt.Print("\n") // 移动到下一行（最后一行不需要移动）
+			fmt.Print("\n") // 移动到下一行
 		}
+	}
+
+	// 移回差异行开始重绘（因为上面的循环把光标移下来了）
+	if linesToClear > 1 {
+		fmt.Printf("\033[%dA", linesToClear-1)
 	}
 
 	// 从差异行开始重绘
