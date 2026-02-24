@@ -139,7 +139,8 @@ func runChat(cmd *cobra.Command, args []string) error {
 	// 创建 renderer
 	var renderer *conversation.Renderer
 	if !chatNoRender {
-		renderer, _ = conversation.NewRenderer(80)
+		width := getTerminalWidth()
+		renderer, _ = conversation.NewRenderer(width)
 	}
 
 	// 运行 REPL
