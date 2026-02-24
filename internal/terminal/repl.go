@@ -103,6 +103,10 @@ func (r *REPL) processStreamChat(input string) error {
 		fmt.Print("\r\033[K")
 	}
 
+	// 在每次新的流式响应开始时重置增量渲染器的内部状态
+	if r.incrementalRenderer != nil {
+		r.incrementalRenderer.Reset()
+	}
 	var fullResponse strings.Builder
 	incrementalFailed := false
 
