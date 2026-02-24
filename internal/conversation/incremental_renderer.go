@@ -2,6 +2,7 @@ package conversation
 
 import (
 	"fmt"
+	"strings"
 )
 
 // IncrementalRenderer 增量渲染器
@@ -112,24 +113,7 @@ func (ir *IncrementalRenderer) LineCount() int {
 
 // splitLines 按行切分字符串
 func splitLines(s string) []string {
-	lines := make([]string, 0)
-	current := ""
-
-	for _, ch := range s {
-		if ch == '\n' {
-			lines = append(lines, current)
-			current = ""
-		} else {
-			current += string(ch)
-		}
-	}
-
-	// 添加最后一行（可能没有换行符）
-	if current != "" || len(lines) == 0 {
-		lines = append(lines, current)
-	}
-
-	return lines
+	return strings.Split(s, "\n")
 }
 
 // findDiffIndex 找到两个切片的第一个差异索引
