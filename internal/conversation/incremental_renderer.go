@@ -51,7 +51,37 @@ func (ir *IncrementalRenderer) RenderIncremental(markdown string) error {
 		return nil
 	}
 
-	// Diff 逻辑在下一个任务实现
+	// Diff: 找到第一个不同的行
+	diffIndex := findDiffIndex(ir.oldLines, newLines)
+
+	if diffIndex == -1 {
+		// 内容完全相同，不需要重绘
+		return nil
+	}
+
+	// 计算需要向上移动的行数
+	moveUp := ir.lineCount - diffIndex
+
+	// 光标回退到差异行
+	fmt.Printf("\033[%dA", moveUp)
+
+	// 清除从光标到屏幕末尾的内容
+	fmt.Print("\033[J")
+
+	// 从差异行开始重绘
+	for i := diffIndex; i < len(newLines); i++ {
+		if i == len(newLines)-1 {
+			// 最后一行不需要换行（避免额外空行）
+			fmt.Print(newLines[i])
+		} else {
+			fmt.Println(newLines[i])
+		}
+	}
+
+	// 更新状态
+	ir.oldLines = newLines
+	ir.lineCount = len(newLines)
+
 	return nil
 }
 
@@ -75,4 +105,23 @@ func splitLines(s string) []string {
 	}
 
 	return lines
+}
+
+// findDiffIndex 找到两个切片的第一个差异索引
+func findDiffIndex(oldLines, newLines []string) int {
+	maxLen := len(oldLines)
+	if len(newLines) > maxLen {
+		maxLen = len(newLines)
+	}
+
+	for i := 0; i < maxLen; i++ {
+		if i >= len(oldLines) || i >= len(newLines) {
+			return i
+		}
+		if oldLines[i] != newLines[i] {
+			return i
+		}
+	}
+
+	return -1 // 完全相同
 }
