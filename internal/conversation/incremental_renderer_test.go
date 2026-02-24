@@ -91,3 +91,18 @@ func TestIncrementalRenderer_Reset(t *testing.T) {
 		t.Error("Expected lineCount to be 0 after reset")
 	}
 }
+
+func TestIncrementalRenderer_SetWidth(t *testing.T) {
+	ir, _ := NewIncrementalRenderer(80)
+
+	// Set new width
+	err := ir.SetWidth(100)
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if ir.width != 100 {
+		t.Errorf("Expected width 100, got %d", ir.width)
+	}
+}

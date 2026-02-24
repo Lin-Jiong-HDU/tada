@@ -92,6 +92,19 @@ func (ir *IncrementalRenderer) Reset() {
 	ir.isFirst = true
 }
 
+// SetWidth 更新终端宽度 (用于 resize)
+// 宽度变化后需要重新创建基础渲染器
+func (ir *IncrementalRenderer) SetWidth(width int) error {
+	baseRenderer, err := NewRenderer(width)
+	if err != nil {
+		return err
+	}
+
+	ir.baseRenderer = baseRenderer
+	ir.width = width
+	return nil
+}
+
 // splitLines 按行切分字符串
 func splitLines(s string) []string {
 	lines := make([]string, 0)
