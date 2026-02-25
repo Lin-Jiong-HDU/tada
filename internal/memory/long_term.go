@@ -87,28 +87,37 @@ func (l *LongTermMemory) saveProfile() error {
 
 // UpdateProfileWithLLM updates user profile markdown using LLM
 func (l *LongTermMemory) UpdateProfileWithLLM(ctx context.Context, newInfo string) error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
+	// Phase 1: read-only access under read lock
+	l.mu.RLock()
 	if l.aiProvider == nil {
+		l.mu.RUnlock()
 		return fmt.Errorf("AI provider not set")
 	}
+	provider := l.aiProvider
+	currentProfile := l.profileMD
+	l.mu.RUnlock()
 
 	// Build update prompt with current markdown and new info
-	updatePrompt := l.buildProfileUpdatePrompt(l.profileMD, newInfo)
+	updatePrompt := l.buildProfileUpdatePrompt(currentProfile, newInfo)
 
 	messages := []ai.Message{
 		{Role: "system", Content: "You are a helpful assistant that maintains user profiles. Always respond with valid markdown only."},
 		{Role: "user", Content: updatePrompt},
 	}
 
-	response, err := l.aiProvider.Chat(ctx, messages)
+	// Perform the potentially long-running LLM call without holding the lock
+	response, err := provider.Chat(ctx, messages)
 	if err != nil {
 		return fmt.Errorf("LLM profile update failed: %w", err)
 	}
 
-	// Store the updated markdown directly
-	l.profileMD = strings.TrimSpace(response)
+	updatedProfile := strings.TrimSpace(response)
+
+	// Phase 2: acquire write lock to commit the updated profile and persist
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.profileMD = updatedProfile
 	return l.saveProfile()
 }
 

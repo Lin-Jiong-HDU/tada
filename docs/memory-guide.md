@@ -18,7 +18,7 @@ Recent conversation summaries, automatically generated when sessions end.
 ### L3: Long-term Memory
 **User Profile**: Your learned preferences (languages, frameworks, editor, etc.)
 **Entity Tracking**: Topics mentioned repeatedly across sessions
-- Stored in: `~/.tada/memory/user_profile.json` and `entities.json`
+- Stored in: `~/.tada/memory/user_profile.md` and `entities.json`
 
 ## Entity Promotion
 
@@ -57,7 +57,7 @@ memory:
 
 ```bash
 # View current profile
-cat ~/.tada/memory/user_profile.json
+cat ~/.tada/memory/user_profile.md
 
 # View tracked entities
 cat ~/.tada/memory/entities.json
@@ -68,33 +68,36 @@ cat ~/.tada/memory/summaries.json
 
 ## Example Profile
 
-```json
-{
-  "tech_preferences": {
-    "languages": ["Go", "Python"],
-    "frameworks": ["React", "Gin"],
-    "editors": ["neovim", "vscode"]
-  },
-  "work_context": {
-    "current_projects": ["tada", "side-project"],
-    "common_paths": ["/Users/johnlin/Dev/go/tada"]
-  },
-  "behavior_patterns": {
-    "preferred_communication": "concise",
-    "often_asks": ["code review", "debugging help"]
-  },
-  "personal_settings": {
-    "timezone": "Asia/Shanghai",
-    "shell": "zsh"
-  }
-}
+```markdown
+# User Profile
+
+## Technical Preferences
+
+- Languages: Go, Python
+- Frameworks: React, Gin
+- Editors: neovim, vscode
+
+## Work Context
+
+- Projects: tada, side-project
+- Common Paths: /Users/johnlin/Dev/go/tada
+
+## Behavior Patterns
+
+- Communication Style: concise
+- Often Asks: code review, debugging help
+
+## Personal Settings
+
+- Timezone: Asia/Shanghai
+- Shell: zsh
 ```
 
 ## Tips
 
 1. **Consistency helps**: Mentioning the same tools/languages across sessions helps build a better profile
 2. **Ephemeral for sensitive**: Use `--no-history` for conversations you don't want remembered
-3. **Manual editing**: You can manually add items to your profile JSON file
+3. **Manual editing**: You can manually edit your profile markdown file
 4. **Reset anytime**: Delete memory files to start fresh
 
 ## Troubleshooting
@@ -108,5 +111,5 @@ cat ~/.tada/memory/summaries.json
 - Delete old entries from `summaries.json`
 
 **Want to forget something?**
-- Edit the relevant JSON file in `~/.tada/memory/`
+- Edit the relevant file in `~/.tada/memory/`
 - Or delete all memory files to start fresh

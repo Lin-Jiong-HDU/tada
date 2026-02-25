@@ -151,7 +151,7 @@ memory:
 
 - `~/.tada/memory/summaries.json` - Short-term summaries
 - `~/.tada/memory/entities.json` - Entity occurrence tracking
-- `~/.tada/memory/user_profile.json` - Learned user profile
+- `~/.tada/memory/user_profile.md` - Learned user profile
 
 ### Key Implementation Details
 

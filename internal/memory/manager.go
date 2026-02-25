@@ -156,14 +156,11 @@ func (m *Manager) buildSystemPrompt() string {
 	// Get profile markdown directly
 	profileMD := m.longTerm.GetProfileMarkdown()
 
-	// Build summaries section
+	// Build summaries section (only the list items, template includes the header)
 	summaries := m.shortTerm.GetSummaries()
 	var summaryParts []string
-	if len(summaries) > 0 {
-		summaryParts = append(summaryParts, "## Recent Conversations")
-		for _, s := range summaries {
-			summaryParts = append(summaryParts, fmt.Sprintf("- %s", s.Summary))
-		}
+	for _, s := range summaries {
+		summaryParts = append(summaryParts, fmt.Sprintf("- %s", s.Summary))
 	}
 
 	// Try to load system template, or use default
@@ -179,12 +176,15 @@ func (m *Manager) buildSystemPrompt() string {
 		}
 	}
 
-	// Fallback to default behavior
+	// Fallback to default behavior - add headers manually
 	var parts []string
 	if profileMD != "" {
 		parts = append(parts, profileMD)
 	}
-	parts = append(parts, summaryParts...)
+	if len(summaryParts) > 0 {
+		parts = append(parts, "## Recent Conversations")
+		parts = append(parts, summaryParts...)
+	}
 
 	if len(parts) == 0 {
 		return systemPrompt

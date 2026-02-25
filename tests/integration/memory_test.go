@@ -105,11 +105,11 @@ func TestMemoryFullFlow(t *testing.T) {
 	}
 
 	// Verify profile was created
-	profile := filepath.Join(tmpDir, "user_profile.json")
+	profile := filepath.Join(tmpDir, "user_profile.md")
 	if _, err := os.Stat(profile); os.IsNotExist(err) {
-		t.Error("user_profile.json was not created")
+		t.Error("user_profile.md was not created")
 	} else {
-		t.Logf("user_profile.json created successfully")
+		t.Logf("user_profile.md created successfully")
 	}
 
 	// Test context building

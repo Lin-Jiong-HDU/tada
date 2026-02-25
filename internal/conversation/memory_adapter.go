@@ -24,8 +24,8 @@ func (a *MemoryAdapter) ID() string {
 // GetMessages returns the conversation messages
 func (a *MemoryAdapter) GetMessages() []memory.ConversationMessage {
 	msgs := make([]memory.ConversationMessage, len(a.conv.Messages))
-	for i, msg := range a.conv.Messages {
-		msgs[i] = memoryMessage{msg: &msg}
+	for i := range a.conv.Messages {
+		msgs[i] = memoryMessage{msg: &a.conv.Messages[i]}
 	}
 	return msgs
 }

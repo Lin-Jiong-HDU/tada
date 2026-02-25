@@ -179,8 +179,17 @@ func (m *Manager) Chat(convID string, userInput string) (string, error) {
 	// 调用 AI
 	messages := conv.GetMessagesForAI()
 	// Inject memory context if available
+	// 为避免出现多个 system 提示，在构建记忆上下文前移除已有的 system 消息，
+	// 让 BuildContext 负责生成统一的带记忆的 system 提示。
 	if m.memoryMgr != nil {
-		messages = m.memoryMgr.BuildContext(messages)
+		// 移除已有的 system 消息（第一条消息）
+		var nonSystemMessages []ai.Message
+		for _, msg := range messages {
+			if msg.Role != "system" {
+				nonSystemMessages = append(nonSystemMessages, msg)
+			}
+		}
+		messages = m.memoryMgr.BuildContext(nonSystemMessages)
 	}
 	response, err := m.aiProvider.Chat(context.Background(), messages)
 	if err != nil {
@@ -254,8 +263,17 @@ func (m *Manager) ChatStream(convID string, userInput string) (<-chan string, er
 	// 调用 AI 流式接口
 	messages := conv.GetMessagesForAI()
 	// Inject memory context if available
+	// 为避免出现多个 system 提示，在构建记忆上下文前移除已有的 system 消息，
+	// 让 BuildContext 负责生成统一的带记忆的 system 提示。
 	if m.memoryMgr != nil {
-		messages = m.memoryMgr.BuildContext(messages)
+		// 移除已有的 system 消息（第一条消息）
+		var nonSystemMessages []ai.Message
+		for _, msg := range messages {
+			if msg.Role != "system" {
+				nonSystemMessages = append(nonSystemMessages, msg)
+			}
+		}
+		messages = m.memoryMgr.BuildContext(nonSystemMessages)
 	}
 	stream, err := m.aiProvider.ChatStream(context.Background(), messages)
 	if err != nil {
