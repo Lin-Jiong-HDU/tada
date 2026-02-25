@@ -88,10 +88,16 @@ func runChat(cmd *cobra.Command, args []string) error {
 	configDir, _ := storage.GetConfigDir()
 	conversationsDir := filepath.Join(configDir, "conversations")
 	promptsDir := filepath.Join(configDir, "prompts")
+	memoryPromptsDir := filepath.Join(configDir, "prompts", "memory")
 
 	// 确保默认 prompts 存在
 	if err := conversation.EnsureDefaultPrompts(promptsDir); err != nil {
 		return fmt.Errorf("初始化 prompts 失败: %w", err)
+	}
+
+	// 确保默认 memory prompts 存在
+	if err := memory.EnsureDefaultPrompts(memoryPromptsDir); err != nil {
+		return fmt.Errorf("初始化 memory prompts 失败: %w", err)
 	}
 
 	convStorage := conversation.NewFileStorage(conversationsDir)
@@ -106,7 +112,8 @@ func runChat(cmd *cobra.Command, args []string) error {
 			EntityThreshold:    cfg.Memory.EntityThreshold,
 			StoragePath:        cfg.Memory.StoragePath,
 		}
-		memMgr, err := memory.NewManager(memConfig, aiProvider)
+		memoryPromptLoader := memory.NewPromptLoader(memoryPromptsDir)
+		memMgr, err := memory.NewManager(memConfig, aiProvider, memoryPromptLoader)
 		if err == nil && memMgr != nil {
 			manager.SetMemoryManager(memMgr)
 		}

@@ -23,6 +23,12 @@ func TestMemoryFullFlow(t *testing.T) {
 	// Setup
 	tmpDir := t.TempDir()
 
+	// Initialize memory prompts
+	memoryPromptsDir := filepath.Join(tmpDir, "prompts", "memory")
+	if err := memory.EnsureDefaultPrompts(memoryPromptsDir); err != nil {
+		t.Fatalf("Failed to initialize memory prompts: %v", err)
+	}
+
 	config := &memory.Config{
 		Enabled:            true,
 		ShortTermMaxTokens: 1000,
@@ -51,7 +57,8 @@ func TestMemoryFullFlow(t *testing.T) {
 		t.Skipf("Unsupported provider: %s", appConfig.AI.Provider)
 	}
 
-	mgr, err := memory.NewManager(config, provider)
+	memoryPromptLoader := memory.NewPromptLoader(memoryPromptsDir)
+	mgr, err := memory.NewManager(config, provider, memoryPromptLoader)
 	if err != nil {
 		t.Fatalf("Failed to create memory manager: %v", err)
 	}

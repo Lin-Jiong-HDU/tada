@@ -25,15 +25,16 @@ type ConversationMessage interface {
 
 // Manager provides unified interface for multi-level memory management
 type Manager struct {
-	config     *Config
-	shortTerm  *ShortTermMemory
-	longTerm   *LongTermMemory
-	extractor  *Extractor
-	aiProvider ai.AIProvider
+	config       *Config
+	shortTerm    *ShortTermMemory
+	longTerm     *LongTermMemory
+	extractor    *Extractor
+	aiProvider   ai.AIProvider
+	promptLoader *PromptLoader
 }
 
 // NewManager creates a new memory manager
-func NewManager(config *Config, aiProvider ai.AIProvider) (*Manager, error) {
+func NewManager(config *Config, aiProvider ai.AIProvider, promptLoader *PromptLoader) (*Manager, error) {
 	if !config.Enabled {
 		return nil, nil // Memory disabled
 	}
@@ -41,11 +42,12 @@ func NewManager(config *Config, aiProvider ai.AIProvider) (*Manager, error) {
 	storagePath := expandPath(config.StoragePath)
 
 	return &Manager{
-		config:     config,
-		shortTerm:  NewShortTermMemory(storagePath, config.ShortTermMaxTokens),
-		longTerm:   NewLongTermMemory(storagePath, config.EntityThreshold),
-		extractor:  NewExtractor(aiProvider),
-		aiProvider: aiProvider,
+		config:       config,
+		shortTerm:    NewShortTermMemory(storagePath, config.ShortTermMaxTokens),
+		longTerm:     NewLongTermMemory(storagePath, config.EntityThreshold),
+		extractor:    NewExtractor(aiProvider, promptLoader),
+		aiProvider:   aiProvider,
+		promptLoader: promptLoader,
 	}, nil
 }
 
@@ -98,9 +100,15 @@ func (m *Manager) processSessionEndAsync(conv Conversation) {
 
 // generateSummary creates a summary of the conversation
 func (m *Manager) generateSummary(ctx context.Context, conv Conversation) (string, error) {
+	// Get summary prompt from loader or use default
+	summaryPrompt := "Summarize the following conversation in 1-2 sentences, focusing on key topics discussed."
+	if m.promptLoader != nil {
+		summaryPrompt = m.promptLoader.LoadOrDefault("summary", summaryPrompt)
+	}
+
 	// Build messages from conversation
 	messages := []ai.Message{
-		{Role: "system", Content: "Summarize the following conversation in 1-2 sentences, focusing on key topics discussed."},
+		{Role: "system", Content: summaryPrompt},
 	}
 
 	for _, msg := range conv.GetMessages() {
@@ -136,38 +144,56 @@ func (m *Manager) BuildContext(currentMessages []ai.Message) []ai.Message {
 
 // buildSystemPrompt creates system prompt with memory context
 func (m *Manager) buildSystemPrompt() string {
-	var parts []string
-
-	// User profile (L3)
+	// Build profile section
 	profile := m.longTerm.GetProfile()
+	var profileParts []string
 	if len(profile.TechPreferences.Languages) > 0 || len(profile.TechPreferences.Frameworks) > 0 {
-		parts = append(parts, "## User Profile")
+		profileParts = append(profileParts, "## User Profile")
 		if len(profile.TechPreferences.Languages) > 0 {
-			parts = append(parts, fmt.Sprintf("Languages: %s", strings.Join(profile.TechPreferences.Languages, ", ")))
+			profileParts = append(profileParts, fmt.Sprintf("Languages: %s", strings.Join(profile.TechPreferences.Languages, ", ")))
 		}
 		if len(profile.TechPreferences.Frameworks) > 0 {
-			parts = append(parts, fmt.Sprintf("Frameworks: %s", strings.Join(profile.TechPreferences.Frameworks, ", ")))
+			profileParts = append(profileParts, fmt.Sprintf("Frameworks: %s", strings.Join(profile.TechPreferences.Frameworks, ", ")))
 		}
 	}
 
-	// Short-term memory summaries (L2)
+	// Build summaries section
 	summaries := m.shortTerm.GetSummaries()
+	var summaryParts []string
 	if len(summaries) > 0 {
-		parts = append(parts, "## Recent Conversations")
+		summaryParts = append(summaryParts, "## Recent Conversations")
 		for _, s := range summaries {
-			parts = append(parts, fmt.Sprintf("- %s", s.Summary))
+			summaryParts = append(summaryParts, fmt.Sprintf("- %s", s.Summary))
 		}
 	}
+
+	// Try to load system template, or use default
+	systemPrompt := "You are tada, a terminal AI assistant."
+	if m.promptLoader != nil {
+		template, err := m.promptLoader.Load("system")
+		if err == nil {
+			// Replace placeholders
+			systemPrompt = template.SystemPrompt
+			systemPrompt = strings.ReplaceAll(systemPrompt, "{{profile}}", strings.Join(profileParts, "\n"))
+			systemPrompt = strings.ReplaceAll(systemPrompt, "{{summaries}}", strings.Join(summaryParts, "\n"))
+			return systemPrompt
+		}
+	}
+
+	// Fallback to default behavior
+	var parts []string
+	parts = append(parts, profileParts...)
+	parts = append(parts, summaryParts...)
 
 	if len(parts) == 0 {
-		return "You are tada, a terminal AI assistant."
+		return systemPrompt
 	}
 
-	return fmt.Sprintf(`You are tada, a terminal AI assistant.
+	return fmt.Sprintf(`%s
 
 %s
 
-Use this context to provide more personalized responses.`, strings.Join(parts, "\n"))
+Use this context to provide more personalized responses.`, systemPrompt, strings.Join(parts, "\n"))
 }
 
 // estimateTokens roughly estimates token count (1 token ≈ 4 characters)

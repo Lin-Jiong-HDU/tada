@@ -39,7 +39,7 @@ func TestExtractor_ExtractFromSummary(t *testing.T) {
     }`
 
 	provider := &MockAIProvider{response: mockResponse}
-	extractor := NewExtractor(provider)
+	extractor := NewExtractor(provider, nil)
 
 	result, err := extractor.ExtractFromSummary(context.Background(), "User discussed Go memory management and React state")
 	if err != nil {

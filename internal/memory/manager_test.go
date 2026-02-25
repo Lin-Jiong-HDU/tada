@@ -13,7 +13,7 @@ func TestManager_BuildContext(t *testing.T) {
 	config.StoragePath = tmpDir
 
 	provider := &MockAIProvider{}
-	mgr, err := NewManager(config, provider)
+	mgr, err := NewManager(config, provider, nil)
 	if err != nil {
 		t.Fatalf("NewManager failed: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestManager_OnSessionEnd(t *testing.T) {
 		response: `{"entities": ["Go"], "preferences": {}, "context": []}`,
 	}
 
-	mgr, err := NewManager(config, provider)
+	mgr, err := NewManager(config, provider, nil)
 	if err != nil {
 		t.Fatalf("NewManager failed: %v", err)
 	}
