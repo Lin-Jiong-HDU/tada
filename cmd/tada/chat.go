@@ -12,6 +12,7 @@ import (
 	"github.com/Lin-Jiong-HDU/tada/internal/ai/glm"
 	"github.com/Lin-Jiong-HDU/tada/internal/ai/openai"
 	"github.com/Lin-Jiong-HDU/tada/internal/conversation"
+	"github.com/Lin-Jiong-HDU/tada/internal/memory"
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
 	"github.com/Lin-Jiong-HDU/tada/internal/terminal"
 	"github.com/spf13/cobra"
@@ -97,6 +98,20 @@ func runChat(cmd *cobra.Command, args []string) error {
 	promptLoader := conversation.NewPromptLoader(promptsDir)
 	manager := conversation.NewManager(convStorage, promptLoader, aiProvider)
 
+	// Initialize memory manager if enabled
+	if cfg.Memory.Enabled {
+		memConfig := &memory.Config{
+			Enabled:            true,
+			ShortTermMaxTokens: cfg.Memory.ShortTermMaxTokens,
+			EntityThreshold:    cfg.Memory.EntityThreshold,
+			StoragePath:        cfg.Memory.StoragePath,
+		}
+		memMgr, err := memory.NewManager(memConfig, aiProvider)
+		if err == nil && memMgr != nil {
+			manager.SetMemoryManager(memMgr)
+		}
+	}
+
 	// 处理子命令
 	if chatList {
 		return runListConversations(manager)
@@ -154,7 +169,17 @@ func runChat(cmd *cobra.Command, args []string) error {
 	fmt.Println("💬 输入消息，/help 查看命令，/exit 退出")
 	fmt.Println()
 
-	return runREPLLoop(repl)
+	err = runREPLLoop(repl)
+	if err != nil {
+		return err
+	}
+
+	// Trigger memory processing for non-ephemeral conversations
+	if !chatNoHistory {
+		_ = manager.OnSessionEnd(conv.ID)
+	}
+
+	return nil
 }
 
 // runREPLLoop 运行 REPL 交互循环

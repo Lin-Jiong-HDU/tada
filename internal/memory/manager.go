@@ -5,10 +5,23 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
-	"github.com/Lin-Jiong-HDU/tada/internal/conversation"
 )
+
+// Conversation represents a conversation for memory processing
+type Conversation interface {
+	ID() string
+	GetMessages() []ConversationMessage
+	UpdatedAt() time.Time
+}
+
+// ConversationMessage represents a message in a conversation
+type ConversationMessage interface {
+	Role() string
+	Content() string
+}
 
 // Manager provides unified interface for multi-level memory management
 type Manager struct {
@@ -37,7 +50,7 @@ func NewManager(config *Config, aiProvider ai.AIProvider) (*Manager, error) {
 }
 
 // OnSessionEnd processes a completed conversation
-func (m *Manager) OnSessionEnd(conv *conversation.Conversation) error {
+func (m *Manager) OnSessionEnd(conv Conversation) error {
 	if m == nil {
 		return nil
 	}
@@ -47,7 +60,7 @@ func (m *Manager) OnSessionEnd(conv *conversation.Conversation) error {
 }
 
 // processSessionEndAsync handles the async workflow
-func (m *Manager) processSessionEndAsync(conv *conversation.Conversation) {
+func (m *Manager) processSessionEndAsync(conv Conversation) {
 	ctx := context.Background()
 
 	// Step 1: Generate summary
@@ -58,9 +71,9 @@ func (m *Manager) processSessionEndAsync(conv *conversation.Conversation) {
 
 	// Step 2: Write to short-term memory
 	summaryRecord := &Summary{
-		ConversationID: conv.ID,
+		ConversationID: conv.ID(),
 		Summary:        summary,
-		Timestamp:      conv.UpdatedAt,
+		Timestamp:      conv.UpdatedAt(),
 		Tokens:         estimateTokens(summary),
 	}
 	m.shortTerm.AddSummary(summaryRecord)
@@ -84,16 +97,16 @@ func (m *Manager) processSessionEndAsync(conv *conversation.Conversation) {
 }
 
 // generateSummary creates a summary of the conversation
-func (m *Manager) generateSummary(ctx context.Context, conv *conversation.Conversation) (string, error) {
+func (m *Manager) generateSummary(ctx context.Context, conv Conversation) (string, error) {
 	// Build messages from conversation
 	messages := []ai.Message{
 		{Role: "system", Content: "Summarize the following conversation in 1-2 sentences, focusing on key topics discussed."},
 	}
 
-	for _, msg := range conv.Messages {
+	for _, msg := range conv.GetMessages() {
 		messages = append(messages, ai.Message{
-			Role:    msg.Role,
-			Content: msg.Content,
+			Role:    msg.Role(),
+			Content: msg.Content(),
 		})
 	}
 

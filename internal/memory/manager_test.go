@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
-	"github.com/Lin-Jiong-HDU/tada/internal/conversation"
 )
 
 func TestManager_BuildContext(t *testing.T) {
@@ -52,13 +51,14 @@ func TestManager_OnSessionEnd(t *testing.T) {
 		t.Fatalf("NewManager failed: %v", err)
 	}
 
-	conv := &conversation.Conversation{
-		ID:   "test-conv",
-		Name: "Test Conversation",
-		Messages: []conversation.Message{
-			{Role: "user", Content: "Tell me about Go", Timestamp: time.Now()},
-			{Role: "assistant", Content: "Go is...", Timestamp: time.Now()},
+	// Create a mock conversation implementing the interface
+	conv := &mockConversation{
+		id:    "test-conv",
+		messages: []*mockMessage{
+			{role: "user", content: "Tell me about Go"},
+			{role: "assistant", content: "Go is..."},
 		},
+		updatedAt: time.Now(),
 	}
 
 	// This should not block (async internally)
@@ -75,3 +75,23 @@ func TestManager_OnSessionEnd(t *testing.T) {
 		t.Error("Expected summary to be created")
 	}
 }
+
+// mockConversation implements Conversation interface for testing
+type mockConversation struct {
+	id        string
+	messages  []*mockMessage
+	updatedAt time.Time
+}
+
+func (m *mockConversation) ID() string                       { return m.id }
+func (m *mockConversation) GetMessages() []ConversationMessage { msgs := make([]ConversationMessage, len(m.messages)); for i, msg := range m.messages { msgs[i] = msg }; return msgs }
+func (m *mockConversation) UpdatedAt() time.Time              { return m.updatedAt }
+
+// mockMessage implements ConversationMessage interface for testing
+type mockMessage struct {
+	role    string
+	content string
+}
+
+func (m *mockMessage) Role() string    { return m.role }
+func (m *mockMessage) Content() string { return m.content }
