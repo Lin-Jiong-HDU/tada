@@ -41,10 +41,13 @@ func NewManager(config *Config, aiProvider ai.AIProvider, promptLoader *PromptLo
 
 	storagePath := expandPath(config.StoragePath)
 
+	longTerm := NewLongTermMemory(storagePath, config.EntityThreshold)
+	longTerm.SetAIProvider(aiProvider, promptLoader)
+
 	return &Manager{
 		config:       config,
 		shortTerm:    NewShortTermMemory(storagePath, config.ShortTermMaxTokens),
-		longTerm:     NewLongTermMemory(storagePath, config.EntityThreshold),
+		longTerm:     longTerm,
 		extractor:    NewExtractor(aiProvider, promptLoader),
 		aiProvider:   aiProvider,
 		promptLoader: promptLoader,
@@ -94,8 +97,14 @@ func (m *Manager) processSessionEndAsync(conv Conversation) {
 		}
 	}
 
-	// Step 5: Update profile from extraction results
-	m.longTerm.UpdateProfile(extraction)
+	// Step 5: Update profile using LLM with new information
+	// Combine summary and extraction for comprehensive profile update
+	newInfo := fmt.Sprintf("Conversation Summary: %s\n\nExtracted Entities: %s",
+		summary, strings.Join(extraction.Entities, ", "))
+	if len(extraction.Context) > 0 {
+		newInfo += fmt.Sprintf("\nTopics Discussed: %s", strings.Join(extraction.Context, ", "))
+	}
+	_ = m.longTerm.UpdateProfileWithLLM(ctx, newInfo)
 }
 
 // generateSummary creates a summary of the conversation
