@@ -23,15 +23,15 @@ func TestLongTermMemory_UpdateEntity(t *testing.T) {
 		t.Error("Expected not promoted on second mention")
 	}
 
-	// Third mention - promoted!
+	// Third mention - threshold reached!
 	promoted, _ = ltm.UpdateEntity("Go")
 	if !promoted {
 		t.Error("Expected promoted on third mention")
 	}
 
-	profile := ltm.GetProfile()
-	if len(profile.TechPreferences.Languages) == 0 {
-		t.Error("Expected Go in profile languages")
+	// Verify entity count
+	if ltm.GetEntityCount("Go") != 3 {
+		t.Error("Expected entity count to be 3")
 	}
 }
 
@@ -48,13 +48,14 @@ func TestLongTermMemory_UpdateProfile(t *testing.T) {
 		Context: []string{"Working on tada project"},
 	}
 
+	// UpdateProfile is deprecated and does nothing
 	err := ltm.UpdateProfile(extraction)
 	if err != nil {
 		t.Fatalf("UpdateProfile failed: %v", err)
 	}
 
-	profile := ltm.GetProfile()
-	if profile.PersonalSettings.Shell != "" {
-		// Should have some defaults set
+	// Verify profile markdown is initially empty
+	if ltm.GetProfileMarkdown() != "" {
+		t.Error("Expected empty profile markdown initially")
 	}
 }

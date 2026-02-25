@@ -70,7 +70,7 @@ func TestMemoryFullFlow(t *testing.T) {
 	// Create a test conversation adapter
 	now := time.Now()
 	conv := &testConversation{
-		id:       "test-integration-conv",
+		id: "test-integration-conv",
 		messages: []*testMessage{
 			{role: "user", content: "I'm working on a Go project called tada"},
 			{role: "assistant", content: "That sounds interesting! Tell me more about tada."},
@@ -138,9 +138,15 @@ type testConversation struct {
 	updatedAt time.Time
 }
 
-func (t *testConversation) ID() string                                    { return t.id }
-func (t *testConversation) GetMessages() []memory.ConversationMessage       { msgs := make([]memory.ConversationMessage, len(t.messages)); for i, msg := range t.messages { msgs[i] = msg }; return msgs }
-func (t *testConversation) UpdatedAt() time.Time                           { return t.updatedAt }
+func (t *testConversation) ID() string { return t.id }
+func (t *testConversation) GetMessages() []memory.ConversationMessage {
+	msgs := make([]memory.ConversationMessage, len(t.messages))
+	for i, msg := range t.messages {
+		msgs[i] = msg
+	}
+	return msgs
+}
+func (t *testConversation) UpdatedAt() time.Time { return t.updatedAt }
 
 // testMessage implements memory.ConversationMessage interface for testing
 type testMessage struct {

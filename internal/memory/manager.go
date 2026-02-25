@@ -153,18 +153,8 @@ func (m *Manager) BuildContext(currentMessages []ai.Message) []ai.Message {
 
 // buildSystemPrompt creates system prompt with memory context
 func (m *Manager) buildSystemPrompt() string {
-	// Build profile section
-	profile := m.longTerm.GetProfile()
-	var profileParts []string
-	if len(profile.TechPreferences.Languages) > 0 || len(profile.TechPreferences.Frameworks) > 0 {
-		profileParts = append(profileParts, "## User Profile")
-		if len(profile.TechPreferences.Languages) > 0 {
-			profileParts = append(profileParts, fmt.Sprintf("Languages: %s", strings.Join(profile.TechPreferences.Languages, ", ")))
-		}
-		if len(profile.TechPreferences.Frameworks) > 0 {
-			profileParts = append(profileParts, fmt.Sprintf("Frameworks: %s", strings.Join(profile.TechPreferences.Frameworks, ", ")))
-		}
-	}
+	// Get profile markdown directly
+	profileMD := m.longTerm.GetProfileMarkdown()
 
 	// Build summaries section
 	summaries := m.shortTerm.GetSummaries()
@@ -183,7 +173,7 @@ func (m *Manager) buildSystemPrompt() string {
 		if err == nil {
 			// Replace placeholders
 			systemPrompt = template.SystemPrompt
-			systemPrompt = strings.ReplaceAll(systemPrompt, "{{profile}}", strings.Join(profileParts, "\n"))
+			systemPrompt = strings.ReplaceAll(systemPrompt, "{{profile}}", profileMD)
 			systemPrompt = strings.ReplaceAll(systemPrompt, "{{summaries}}", strings.Join(summaryParts, "\n"))
 			return systemPrompt
 		}
@@ -191,7 +181,9 @@ func (m *Manager) buildSystemPrompt() string {
 
 	// Fallback to default behavior
 	var parts []string
-	parts = append(parts, profileParts...)
+	if profileMD != "" {
+		parts = append(parts, profileMD)
+	}
 	parts = append(parts, summaryParts...)
 
 	if len(parts) == 0 {

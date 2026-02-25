@@ -21,10 +21,10 @@ func NewPromptLoader(promptsDir string) *PromptLoader {
 
 // PromptTemplate prompt 模板
 type PromptTemplate struct {
-	Name        string
-	Title       string
-	Description string
-	Content     string
+	Name         string
+	Title        string
+	Description  string
+	Content      string
 	SystemPrompt string
 }
 

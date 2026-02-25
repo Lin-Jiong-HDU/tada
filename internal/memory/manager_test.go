@@ -53,7 +53,7 @@ func TestManager_OnSessionEnd(t *testing.T) {
 
 	// Create a mock conversation implementing the interface
 	conv := &mockConversation{
-		id:    "test-conv",
+		id: "test-conv",
 		messages: []*mockMessage{
 			{role: "user", content: "Tell me about Go"},
 			{role: "assistant", content: "Go is..."},
@@ -83,9 +83,15 @@ type mockConversation struct {
 	updatedAt time.Time
 }
 
-func (m *mockConversation) ID() string                       { return m.id }
-func (m *mockConversation) GetMessages() []ConversationMessage { msgs := make([]ConversationMessage, len(m.messages)); for i, msg := range m.messages { msgs[i] = msg }; return msgs }
-func (m *mockConversation) UpdatedAt() time.Time              { return m.updatedAt }
+func (m *mockConversation) ID() string { return m.id }
+func (m *mockConversation) GetMessages() []ConversationMessage {
+	msgs := make([]ConversationMessage, len(m.messages))
+	for i, msg := range m.messages {
+		msgs[i] = msg
+	}
+	return msgs
+}
+func (m *mockConversation) UpdatedAt() time.Time { return m.updatedAt }
 
 // mockMessage implements ConversationMessage interface for testing
 type mockMessage struct {
