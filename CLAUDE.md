@@ -108,6 +108,58 @@ internal/
 - `A`: Execute all approved, `R`: Reject all
 - `q`: Quit
 
+## Multi-Level Memory System
+
+Tada features a CPU cache-inspired multi-level memory system for chat functionality:
+
+- **L1**: Current session (full message history)
+- **L2**: Short-term memory (recent conversation summaries, token-limited)
+- **L3**: Long-term memory (user profile + entity tracking)
+
+### Memory Flow
+
+1. Session ends → AI generates summary → stored in L2
+2. LLM extracts entities from summary → tracked in L3
+3. Entity mentioned 5+ times → promoted to user profile
+4. All levels injected into system prompt for context
+
+### Architecture
+
+**Memory Package** (`internal/memory/`):
+- `types.go`: Core data structures (Summary, Entity, UserProfile, Config)
+- `short_term.go`: Short-term memory manager with FIFO eviction
+- `long_term.go`: Long-term memory with entity tracking and promotion
+- `extractor.go`: LLM-based entity extraction from summaries
+- `manager.go`: Unified management interface
+
+**Integration**:
+- `conversation.Manager.SetMemoryManager()`: Inject memory manager
+- `conversation.Manager.OnSessionEnd()`: Trigger memory processing
+- Chat/ChatStream methods automatically inject memory context via `BuildContext()`
+
+### Configuration
+
+```yaml
+memory:
+  enabled: true
+  short_term_max_tokens: 4000
+  entity_threshold: 5
+  storage_path: "~/.tada/memory"
+```
+
+### Storage Locations
+
+- `~/.tada/memory/summaries.json` - Short-term summaries
+- `~/.tada/memory/entities.json` - Entity occurrence tracking
+- `~/.tada/memory/user_profile.json` - Learned user profile
+
+### Key Implementation Details
+
+- Import cycle avoidance: Memory package defines interfaces (`Conversation`, `ConversationMessage`)
+- `conversation.MemoryAdapter` bridges conversation.Conversation to memory.Conversation
+- Async processing: `OnSessionEnd` returns immediately, processes in background
+- Ephemeral conversations are NOT processed (no memory for `--no-history` chats)
+
 ## Configuration
 
 Location: `~/.tada/config.yaml`
