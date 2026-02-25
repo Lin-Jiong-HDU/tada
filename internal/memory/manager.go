@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
@@ -33,7 +32,6 @@ type Manager struct {
 	extractor    *Extractor
 	aiProvider   ai.AIProvider
 	promptLoader *PromptLoader
-	wg           sync.WaitGroup
 }
 
 // NewManager creates a new memory manager
@@ -63,20 +61,9 @@ func (m *Manager) OnSessionEnd(conv Conversation) error {
 		return nil
 	}
 
-	m.wg.Add(1)
-	go func() {
-		defer m.wg.Done()
-		m.processSessionEndAsync(conv)
-	}()
+	// Start async processing without blocking
+	go m.processSessionEndAsync(conv)
 	return nil
-}
-
-// Wait waits for all pending async operations to complete
-func (m *Manager) Wait() {
-	if m == nil {
-		return
-	}
-	m.wg.Wait()
 }
 
 // processSessionEndAsync handles the async workflow

@@ -182,17 +182,14 @@ func runChat(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Trigger memory processing for non-ephemeral conversations
+	// Trigger memory processing for non-ephemeral conversations (non-blocking)
 	if !chatNoHistory {
-		fmt.Println("\n💾 正在保存对话记忆...")
-		if err := manager.OnSessionEnd(conv.ID); err != nil {
-			log.Printf("Warning: memory processing failed: %v", err)
-		}
-		// Wait for async memory processing to complete
-		if memoryMgr := manager.GetMemoryManager(); memoryMgr != nil {
-			memoryMgr.Wait()
-			fmt.Println("✓ 记忆保存完成")
-		}
+		// Start memory processing in background without waiting
+		go func() {
+			if err := manager.OnSessionEnd(conv.ID); err != nil {
+				log.Printf("Warning: memory processing failed: %v", err)
+			}
+		}()
 	}
 
 	return nil

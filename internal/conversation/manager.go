@@ -34,11 +34,6 @@ func (m *Manager) SetMemoryManager(memMgr *memory.Manager) {
 	m.memoryMgr = memMgr
 }
 
-// GetMemoryManager returns the memory manager
-func (m *Manager) GetMemoryManager() *memory.Manager {
-	return m.memoryMgr
-}
-
 // OnSessionEnd triggers memory processing for a conversation when it ends
 func (m *Manager) OnSessionEnd(convID string) error {
 	if m.memoryMgr == nil {
