@@ -25,7 +25,9 @@ name: "extract"
 title: "实体提取"
 description: "从对话中提取实体和用户偏好"
 ---
-Extract structured information from this conversation summary.
+Extract structured information from the following conversation summary:
+
+Summary: {{summary}}
 
 Please extract and return as JSON:
 {
