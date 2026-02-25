@@ -3,8 +3,10 @@ package memory
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Lin-Jiong-HDU/tada/internal/ai"
@@ -31,6 +33,7 @@ type Manager struct {
 	extractor    *Extractor
 	aiProvider   ai.AIProvider
 	promptLoader *PromptLoader
+	wg           sync.WaitGroup
 }
 
 // NewManager creates a new memory manager
@@ -60,21 +63,39 @@ func (m *Manager) OnSessionEnd(conv Conversation) error {
 		return nil
 	}
 
-	go m.processSessionEndAsync(conv)
+	m.wg.Add(1)
+	go func() {
+		defer m.wg.Done()
+		m.processSessionEndAsync(conv)
+	}()
 	return nil
+}
+
+// Wait waits for all pending async operations to complete
+func (m *Manager) Wait() {
+	if m == nil {
+		return
+	}
+	m.wg.Wait()
 }
 
 // processSessionEndAsync handles the async workflow
 func (m *Manager) processSessionEndAsync(conv Conversation) {
+	log.Printf("[memory] Processing session end for conversation %s", conv.ID())
+
 	ctx := context.Background()
 
 	// Step 1: Generate summary
+	log.Printf("[memory] Step 1: Generating summary...")
 	summary, err := m.generateSummary(ctx, conv)
 	if err != nil {
-		return // Silently fail on error
+		log.Printf("[memory] Error generating summary: %v", err)
+		return
 	}
+	log.Printf("[memory] Summary generated: %s", summary)
 
 	// Step 2: Write to short-term memory
+	log.Printf("[memory] Step 2: Writing to short-term memory...")
 	summaryRecord := &Summary{
 		ConversationID: conv.ID(),
 		Summary:        summary,
@@ -84,27 +105,37 @@ func (m *Manager) processSessionEndAsync(conv Conversation) {
 	m.shortTerm.AddSummary(summaryRecord)
 
 	// Step 3: Extract entities using LLM
+	log.Printf("[memory] Step 3: Extracting entities...")
 	extraction, err := m.extractor.ExtractFromSummary(ctx, summary)
 	if err != nil {
+		log.Printf("[memory] Error extracting entities: %v", err)
 		return // Fallback: no extraction
 	}
+	log.Printf("[memory] Entities extracted: %v", extraction.Entities)
 
 	// Step 4: Update entity counts and check for promotion
+	log.Printf("[memory] Step 4: Updating entity counts...")
 	for _, entity := range extraction.Entities {
 		promoted, _ := m.longTerm.UpdateEntity(entity)
 		if promoted {
-			// Entity promoted to profile
+			log.Printf("[memory] Entity '%s' promoted to profile", entity)
 		}
 	}
 
 	// Step 5: Update profile using LLM with new information
+	log.Printf("[memory] Step 5: Updating user profile...")
 	// Combine summary and extraction for comprehensive profile update
 	newInfo := fmt.Sprintf("Conversation Summary: %s\n\nExtracted Entities: %s",
 		summary, strings.Join(extraction.Entities, ", "))
 	if len(extraction.Context) > 0 {
 		newInfo += fmt.Sprintf("\nTopics Discussed: %s", strings.Join(extraction.Context, ", "))
 	}
-	_ = m.longTerm.UpdateProfileWithLLM(ctx, newInfo)
+	err = m.longTerm.UpdateProfileWithLLM(ctx, newInfo)
+	if err != nil {
+		log.Printf("[memory] Error updating profile: %v", err)
+		return
+	}
+	log.Printf("[memory] Session processing complete!")
 }
 
 // generateSummary creates a summary of the conversation

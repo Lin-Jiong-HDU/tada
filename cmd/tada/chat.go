@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -183,7 +184,15 @@ func runChat(cmd *cobra.Command, args []string) error {
 
 	// Trigger memory processing for non-ephemeral conversations
 	if !chatNoHistory {
-		_ = manager.OnSessionEnd(conv.ID)
+		fmt.Println("\n💾 正在保存对话记忆...")
+		if err := manager.OnSessionEnd(conv.ID); err != nil {
+			log.Printf("Warning: memory processing failed: %v", err)
+		}
+		// Wait for async memory processing to complete
+		if memoryMgr := manager.GetMemoryManager(); memoryMgr != nil {
+			memoryMgr.Wait()
+			fmt.Println("✓ 记忆保存完成")
+		}
 	}
 
 	return nil
