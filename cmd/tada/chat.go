@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/Lin-Jiong-HDU/tada/internal/ai/glm"
 	"github.com/Lin-Jiong-HDU/tada/internal/ai/openai"
 	"github.com/Lin-Jiong-HDU/tada/internal/conversation"
+	"github.com/Lin-Jiong-HDU/tada/internal/memory"
 	"github.com/Lin-Jiong-HDU/tada/internal/storage"
 	"github.com/Lin-Jiong-HDU/tada/internal/terminal"
 	"github.com/spf13/cobra"
@@ -87,15 +89,36 @@ func runChat(cmd *cobra.Command, args []string) error {
 	configDir, _ := storage.GetConfigDir()
 	conversationsDir := filepath.Join(configDir, "conversations")
 	promptsDir := filepath.Join(configDir, "prompts")
+	memoryPromptsDir := filepath.Join(configDir, "prompts", "memory")
 
 	// 确保默认 prompts 存在
 	if err := conversation.EnsureDefaultPrompts(promptsDir); err != nil {
 		return fmt.Errorf("初始化 prompts 失败: %w", err)
 	}
 
+	// 确保默认 memory prompts 存在
+	if err := memory.EnsureDefaultPrompts(memoryPromptsDir); err != nil {
+		return fmt.Errorf("初始化 memory prompts 失败: %w", err)
+	}
+
 	convStorage := conversation.NewFileStorage(conversationsDir)
 	promptLoader := conversation.NewPromptLoader(promptsDir)
 	manager := conversation.NewManager(convStorage, promptLoader, aiProvider)
+
+	// Initialize memory manager if enabled
+	if cfg.Memory.Enabled {
+		memConfig := &memory.Config{
+			Enabled:            true,
+			ShortTermMaxTokens: cfg.Memory.ShortTermMaxTokens,
+			EntityThreshold:    cfg.Memory.EntityThreshold,
+			StoragePath:        cfg.Memory.StoragePath,
+		}
+		memoryPromptLoader := memory.NewPromptLoader(memoryPromptsDir)
+		memMgr, err := memory.NewManager(memConfig, aiProvider, memoryPromptLoader)
+		if err == nil && memMgr != nil {
+			manager.SetMemoryManager(memMgr)
+		}
+	}
 
 	// 处理子命令
 	if chatList {
@@ -154,7 +177,25 @@ func runChat(cmd *cobra.Command, args []string) error {
 	fmt.Println("💬 输入消息，/help 查看命令，/exit 退出")
 	fmt.Println()
 
-	return runREPLLoop(repl)
+	err = runREPLLoop(repl)
+	if err != nil {
+		return err
+	}
+
+	// Trigger memory processing for non-ephemeral conversations
+	if !chatNoHistory {
+		fmt.Println("\n💾 正在保存对话记忆...")
+		if err := manager.OnSessionEnd(conv.ID); err != nil {
+			log.Printf("Warning: memory processing failed: %v", err)
+		}
+		// Wait for async memory processing to complete
+		if memoryMgr := manager.GetMemoryManager(); memoryMgr != nil {
+			memoryMgr.Wait()
+			fmt.Println("✓ 记忆保存完成")
+		}
+	}
+
+	return nil
 }
 
 // runREPLLoop 运行 REPL 交互循环

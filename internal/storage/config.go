@@ -22,6 +22,7 @@ type Config struct {
 	AI       AIConfig                `mapstructure:"ai"`
 	Security security.SecurityPolicy `mapstructure:"security"`
 	Chat     ChatConfig              `mapstructure:"chat"`
+	Memory   MemoryConfig            `mapstructure:"memory"`
 }
 
 // AIConfig holds AI-related configuration
@@ -48,6 +49,14 @@ type ChatConfig struct {
 	Stream         bool            `mapstructure:"stream"`
 	RenderMarkdown bool            `mapstructure:"render_markdown"`
 	Streaming      StreamingConfig `mapstructure:"streaming"`
+}
+
+// MemoryConfig holds memory-related configuration
+type MemoryConfig struct {
+	Enabled            bool   `mapstructure:"enabled"`
+	ShortTermMaxTokens int    `mapstructure:"short_term_max_tokens"`
+	EntityThreshold    int    `mapstructure:"entity_threshold"`
+	StoragePath        string `mapstructure:"storage_path"`
 }
 
 // DefaultChatConfig returns default chat configuration
@@ -111,6 +120,12 @@ func InitConfig() (*Config, error) {
 	v.SetDefault("chat.stream", true)
 	v.SetDefault("chat.render_markdown", true)
 	v.SetDefault("chat.streaming.max_display_lines", 10)
+
+	// Memory defaults
+	v.SetDefault("memory.enabled", true)
+	v.SetDefault("memory.short_term_max_tokens", 4000)
+	v.SetDefault("memory.entity_threshold", 5)
+	v.SetDefault("memory.storage_path", "~/.tada/memory")
 
 	// Read config file (ignore if not exists)
 	if err := v.ReadInConfig(); err != nil {
@@ -177,6 +192,12 @@ func SaveConfig(cfg *Config) error {
 	v.Set("chat.stream", cfg.Chat.Stream)
 	v.Set("chat.render_markdown", cfg.Chat.RenderMarkdown)
 	v.Set("chat.streaming.max_display_lines", cfg.Chat.Streaming.MaxDisplayLines)
+
+	// Save memory config
+	v.Set("memory.enabled", cfg.Memory.Enabled)
+	v.Set("memory.short_term_max_tokens", cfg.Memory.ShortTermMaxTokens)
+	v.Set("memory.entity_threshold", cfg.Memory.EntityThreshold)
+	v.Set("memory.storage_path", cfg.Memory.StoragePath)
 
 	configPath := filepath.Join(configDir, ConfigFileName+"."+ConfigFileType)
 	return v.WriteConfigAs(configPath)
